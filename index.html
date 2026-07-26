@@ -296,11 +296,10 @@
       overflow:hidden;border-radius:22px;
       border:1px solid rgba(129,231,255,.34);
       background:
-        linear-gradient(180deg,rgba(17,117,158,.12),rgba(3,66,105,.34)),
-        url("./start-cover.jpg") center 47% / cover no-repeat;
+        radial-gradient(circle at 50% -30%,rgba(184,248,255,.38),transparent 48%),
+        linear-gradient(180deg,#167ead 0%,#07547f 65%,#063e66 100%);
       box-shadow:inset 0 8px 18px rgba(199,250,255,.09)
     }
-    .startAquarium > svg{display:none}
     .startAquarium::before{
       content:"";position:absolute;left:-5%;right:-5%;bottom:-13px;height:40px;
       border-radius:50% 50% 0 0;
@@ -310,7 +309,7 @@
         radial-gradient(circle at 74% 18%,#68d8a4 0 6px,transparent 7px),
         radial-gradient(circle at 90% 24%,#ffb95c 0 5px,transparent 6px),
         linear-gradient(180deg,#4e8e83,#295e69);
-      opacity:.34
+      opacity:.86
     }
     .startAquarium::after{
       content:"";position:absolute;inset:0;pointer-events:none;
