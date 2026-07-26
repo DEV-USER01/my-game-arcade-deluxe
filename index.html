@@ -102,11 +102,14 @@
     .tip{background:rgba(99,216,255,.08);border:1px solid var(--line);border-radius:14px;padding:10px;font-size:13px}
     .hidden{display:none!important}
     #toast{
-      position:absolute;left:50%;top:28%;transform:translate(-50%,-50%);
-      padding:9px 14px;border-radius:999px;background:rgba(0,20,34,.82);border:1px solid var(--line);
-      font-weight:850;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;white-space:nowrap;z-index:200
+      position:absolute;left:50%;top:25%;transform:translate(-50%,-50%);
+      width:max-content;max-width:min(78vw,300px);
+      padding:7px 10px;border-radius:12px;background:rgba(0,20,34,.88);border:1px solid var(--line);
+      font-size:11px;line-height:1.35;font-weight:750;text-align:center;
+      pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;
+      white-space:pre-line;overflow-wrap:anywhere;z-index:200
     }
-    #toast.show{opacity:1;transform:translate(-50%,-60%)}
+    #toast.show{opacity:1;transform:translate(-50%,-58%)}
     .shopGrid{
       display:grid;grid-template-columns:1fr;gap:10px
     }
@@ -396,7 +399,8 @@
 
   function toast(msg){
     ui.toast.textContent=msg;ui.toast.classList.add("show");
-    clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.classList.remove("show"),1200);
+    const duration=String(msg).includes("\n")?1800:1200;
+    clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.classList.remove("show"),duration);
   }
 
   function randomType(){
@@ -1872,7 +1876,8 @@
     const fish=nearest(state.fish,p.x,p.y,42);
     if(fish){
       const status=getFishStatus(fish);
-      toast(`${fish.typeData.name}: ${status.emoji} ${status.label} • สุขภาพ ${Math.round(fish.health)}% • ความหิว ${Math.round(Math.min(130,fish.hunger))}% • ${fishGrowthStage(fish)}`);
+      toast(`${fish.typeData.name} • ${status.emoji} ${status.label}
+❤️ ${Math.round(fish.health)}%   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}`);
       return;
     }
     if(p.y>tankTop&&p.y<tankBottom-5) createFood(p.x,p.y);
