@@ -226,7 +226,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Balance Update: ศัตรูจู่โจมมาช้าลงและลดดาเมจเพื่อให้เล่นสบายขึ้น</p>
+      <p>เวอร์ชัน Enemy Health Update: ลดเลือดศัตรูลงอีก ทำให้กำจัดได้เร็วขึ้น</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -784,7 +784,7 @@
       for(let i=0;i<weight;i++) weightedPool.push(et);
     });
     const et = weightedPool[Math.floor(Math.random()*weightedPool.length)] || ENEMY_TYPES[0];
-    const hp = Math.max(5, Math.floor((5+baseWave*1.55) * et.hpMul));
+    const hp = Math.max(4, Math.floor((4+baseWave*1.0) * et.hpMul));
     state.enemies.push({
       key:et.key, type:et,
       x:Math.random()<.5?-55:W+55,y:tankTop+80+Math.random()*(tankBottom-tankTop-190),
