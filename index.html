@@ -422,7 +422,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Mini Event Schedule: ย่อแถบเวลาของอีเวนต์ให้เล็กและไม่บังพื้นที่ตู้ปลา</p>
+      <p>เวอร์ชัน Event Soundscapes: แต่ละอีเวนต์มีเสียงบรรยากาศเฉพาะตลอดช่วงอีเวนต์</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -632,7 +632,8 @@
   const FRAME_MS = 1000 / TARGET_FPS;
   let W=0,H=0,DPR=1, tankTop=90, tankBottom=0, last=0, lastDraw=0, running=false, paused=false;
   let audioCtx=null,audioMaster=null,audioCompressor=null,audioSfxGain=null,audioMusicGain=null;
-  let audioNoiseBuffer=null,musicTimer=null,musicPhrase=0,drawTimer=0;
+  let audioNoiseBuffer=null,musicTimer=null,musicPhrase=0;
+  let eventAmbientTimer=null,eventAmbientKey=null,drawTimer=0;
   let settingsResumeOnClose=false;
   const soundCooldowns={};
   const audioSettings=loadAudioSettings();
@@ -701,6 +702,7 @@
       lastDraw=last;
     }
     syncBackgroundMusic();
+    syncEventAmbientSound();
   },{passive:true});
 
   function buildDecor(){
@@ -838,6 +840,7 @@
     updateEventScheduleUI(true);
     ensureAudio();
     syncBackgroundMusic();
+    syncEventAmbientSound();
   }
 
   function closeAudioSettings(){
@@ -850,6 +853,7 @@
     }
     settingsResumeOnClose=false;
     syncBackgroundMusic();
+    syncEventAmbientSound();
   }
 
   const SFX_FULL_VOLUME_GAIN=8.75;
@@ -1095,8 +1099,9 @@
     const now=audioCtx.currentTime;
     audioMusicGain.gain.cancelScheduledValues(now);
     audioMusicGain.gain.setValueAtTime(Math.max(.0001,audioMusicGain.gain.value),now);
+    const eventMusicDuck=(state.activeEvent||state.eelRaid?.phase==="active")?.55:1;
     audioMusicGain.gain.linearRampToValueAtTime(
-      shouldPlay?Math.max(.0001,musicVolumeGain()):.0001,
+      shouldPlay?Math.max(.0001,musicVolumeGain()*eventMusicDuck):.0001,
       now+.22
     );
 
@@ -1124,6 +1129,7 @@
     }
 
     updateAudioSettingsUI();
+    syncEventAmbientSound();
     if(audioSettings.sfxEnabled) setTimeout(()=>sfx("save"),90);
   }
 
@@ -1150,6 +1156,7 @@
     }
 
     updateAudioSettingsUI();
+    syncEventAmbientSound();
     if(preview&&audioSettings.sfxEnabled&&audioSettings.sfxVolume>0){
       sfx("coin",3);
     }
@@ -1165,6 +1172,117 @@
     if(preview&&audioSettings.musicEnabled&&audioSettings.musicVolume>0){
       playRelaxingBell(523.25,1.25,.007,0,0);
     }
+  }
+
+  function currentEventAmbientKey(){
+    if(state.eelRaid?.phase==="active") return "eel";
+    return state.activeEvent?.key||null;
+  }
+
+  function eventAmbientDelay(key){
+    if(key==="eel") return 1650;
+    if(key==="storm") return 2500;
+    if(key==="gold") return 2900;
+    if(key==="rainbow") return 3150;
+    return 3500;
+  }
+
+  function playEventAmbientPhrase(key){
+    if(
+      !key
+      ||!audioSettings.sfxEnabled
+      ||audioSettings.sfxVolume<=0
+      ||paused
+      ||!running
+      ||document.hidden
+    ) return;
+
+    if(key==="rainbow"){
+      // ประกายไล่โน้ตสดใส
+      const shift=[0,2,4][Math.floor(Math.random()*3)];
+      const notes=[523.25,659.25,783.99,987.77].map(
+        note=>note*Math.pow(2,shift/12)
+      );
+      notes.forEach((note,index)=>{
+        playTone(note,.22,"sine",.0065,index*.16,note*1.025,(index-1.5)*.13);
+      });
+      playNoise(.34,.0018,2500,"highpass",.12);
+    }else if(key==="storm"){
+      // ลม พายุ และฟ้าร้องทุ้ม
+      playNoise(.72,.0068,520,"lowpass",0,(Math.random()-.5)*.35);
+      playTone(82+Math.random()*18,.66,"sawtooth",.0075,.04,48,-.18);
+      if(Math.random()<.48){
+        playNoise(.20,.0105,185,"lowpass",.34,.18);
+        playTone(155,.24,"square",.0045,.37,72,.20);
+      }
+    }else if(key==="gold"){
+      // เหรียญและกระดิ่งระยิบระยับ
+      const root=[784,880,988][Math.floor(Math.random()*3)];
+      playTone(root,.12,"triangle",.008,0,root*1.05,-.18);
+      playTone(root*1.25,.15,"sine",.006,.12,root*1.34,.04);
+      playTone(root*1.5,.20,"triangle",.005,.26,root*1.62,.20);
+      playNoise(.12,.0016,3200,"highpass",.18);
+    }else if(key==="blessing"){
+      // น้ำและระฆังนุ่ม ๆ
+      const root=[392,440,493.88][Math.floor(Math.random()*3)];
+      playTone(root,.60,"sine",.0058,0,root*1.015,-.24);
+      playTone(root*1.334,.72,"sine",.0048,.22,root*1.36,.08);
+      playTone(root*2,.46,"triangle",.0038,.52,root*2.04,.26);
+      playNoise(.52,.0017,2100,"highpass",.08);
+    }else if(key==="eel"){
+      // กระแสไฟเต้นเป็นจังหวะระหว่างปลาไหลบุก
+      playTone(118,.48,"sawtooth",.008,0,76,-.20);
+      playTone(640+Math.random()*160,.16,"square",.0055,.14,220,.20);
+      playNoise(.30,.0075,2100,"highpass",.10,(Math.random()-.5)*.5);
+    }
+  }
+
+  function stopEventAmbientSound(){
+    if(eventAmbientTimer){
+      clearTimeout(eventAmbientTimer);
+      eventAmbientTimer=null;
+    }
+    eventAmbientKey=null;
+  }
+
+  function syncEventAmbientSound(){
+    const key=currentEventAmbientKey();
+    const shouldPlay=
+      !!key
+      &&audioSettings.sfxEnabled
+      &&audioSettings.sfxVolume>0
+      &&running
+      &&!paused
+      &&!document.hidden;
+
+    if(!shouldPlay){
+      stopEventAmbientSound();
+      return;
+    }
+
+    if(eventAmbientKey===key&&eventAmbientTimer) return;
+
+    stopEventAmbientSound();
+    eventAmbientKey=key;
+
+    const tick=()=>{
+      if(
+        currentEventAmbientKey()!==eventAmbientKey
+        ||!audioSettings.sfxEnabled
+        ||audioSettings.sfxVolume<=0
+        ||paused
+        ||!running
+        ||document.hidden
+      ){
+        stopEventAmbientSound();
+        return;
+      }
+
+      playEventAmbientPhrase(eventAmbientKey);
+      eventAmbientTimer=setTimeout(tick,eventAmbientDelay(eventAmbientKey));
+    };
+
+    eventAmbientTimer=setTimeout(tick,key==="eel"?650:850);
   }
 
   function soundReady(name,gapMs=0){
@@ -1447,6 +1565,8 @@
     updateEelRaidUI(true);
     updateEventScheduleUI(true);
     toast("🚨 ระวัง! ฝูงปลาไหลไฟฟ้ากำลังมา");
+    stopEventAmbientSound();
+    syncBackgroundMusic();
     sfx("siren");
   }
 
@@ -1476,7 +1596,10 @@
     state.eelRaidUiSecond=-1;
     state.scheduleUiSecond=-1;
     spawnElectricEelSchool();updateEelRaidUI(true);updateEventScheduleUI(true);
-    toast("⚡ ฝูงปลาไหลไฟฟ้าพุ่งเข้ามาแล้ว!");sfx("eelRush");
+    toast("⚡ ฝูงปลาไหลไฟฟ้าพุ่งเข้ามาแล้ว!");
+    sfx("eelRush");
+    syncBackgroundMusic();
+    syncEventAmbientSound();
   }
 
   function shockFishFromEel(eel,fish){
@@ -1502,6 +1625,8 @@
     state.scheduleUiSecond=-1;
     updateEelRaidUI(true);scheduleNextEelRaid(false);updateEventScheduleUI(true);
     toast(`⚡ ฝูงปลาไหลผ่านไปแล้ว\nช็อต ${shocked} ครั้ง • ติดตราไฟฟ้า ${scarred} ตัว`);
+    stopEventAmbientSound();
+    syncBackgroundMusic();
     sfx("eventEnd");updateUI();saveProgress();
   }
 
@@ -1574,6 +1699,8 @@
     toast(`${type.icon} ${type.name} เริ่มแล้ว!
 ปลา ${newlyBuffed} ตัวได้รับบัฟถาวร: ${type.fishBuff}`);
     sfx("event",type.key);
+    syncBackgroundMusic();
+    syncEventAmbientSound();
     updateEventUI(true);
     updateEventScheduleUI(true);
     updateUI();
@@ -1587,6 +1714,8 @@
     updateEventUI(true);
     updateEventScheduleUI(true);
     toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);
+    stopEventAmbientSound();
+    syncBackgroundMusic();
     sfx("eventEnd");
     updateUI();
   }
@@ -1613,6 +1742,7 @@
   }
 
   function reset(loadSaved=false){
+    stopEventAmbientSound();
     state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];state.guardians=[];state.guardShots=[];
     state.electricEels=[];state.shockFx=[];
     state.snail=null;state.catfishHelper=null;state.elapsed=0;state.nextEnemy=50;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
@@ -4308,6 +4438,7 @@ ${state.activeEvent.type.icon} อีเวนต์: ${state.activeEvent.type.n
     ui.pauseOverlay.classList.remove("hidden");
     saveProgress();
     syncBackgroundMusic();
+    syncEventAmbientSound();
   };
   $("resumeBtn").onclick=()=>{
     paused=false;
@@ -4315,6 +4446,7 @@ ${state.activeEvent.type.icon} อีเวนต์: ${state.activeEvent.type.n
     lastDraw=last;
     ui.pauseOverlay.classList.add("hidden");
     syncBackgroundMusic();
+    syncEventAmbientSound();
   };
   $("restartPauseBtn").onclick=()=>{ localStorage.removeItem(SAVE_KEY); ui.pauseOverlay.classList.add("hidden"); reset(false); };
 
