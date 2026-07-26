@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#06253d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Aqua Pocket Deluxe — Cartoon Undersea</title>
+  <title>Aqua Pocket Deluxe — Smooth Mobile</title>
   <style>
     :root{
       --ink:#e8fbff;
@@ -148,7 +148,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Cartoon Undersea: ปลาการ์ตูน 2.5D ที่มีแสงเงาและครีบขยับนุ่มขึ้น พร้อมฉากใต้ทะเลลึกที่มีแสงลอดน้ำ แนวปะการัง หิน สาหร่าย และฝูงปลาไกล ๆ</p>
+      <p>เวอร์ชัน Smooth Mobile: ปลาการ์ตูน 2.5D และฉากใต้ทะเลเหมือนเดิม แต่ปรับความละเอียด เอฟเฟกต์ และเฟรมเรตให้เสถียรบนมือถือมากขึ้น</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -227,7 +227,7 @@
   ];
 
   const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d",{alpha:false,desynchronized:true}) || canvas.getContext("2d");
   const $ = id => document.getElementById(id);
   const ui = {
     coins:$("coins"), goal:$("goal"), wave:$("wave"), tankStats:$("tankStats"),
@@ -235,7 +235,10 @@
     shopOverlay:$("shopOverlay"), startOverlay:$("startOverlay"), pauseOverlay:$("pauseOverlay")
   };
 
-  let W=0,H=0,DPR=1, tankTop=90, tankBottom=0, last=0, running=false, paused=false;
+  const MOBILE_MODE = matchMedia("(pointer:coarse)").matches || innerWidth < 900;
+  const TARGET_FPS = MOBILE_MODE ? 30 : 45;
+  const FRAME_MS = 1000 / TARGET_FPS;
+  let W=0,H=0,DPR=1, tankTop=90, tankBottom=0, last=0, lastDraw=0, running=false, paused=false;
   let audioCtx=null, drawTimer=0;
 
   const state = {
@@ -248,18 +251,29 @@
   function rescueCost(){ return Math.min(Math.floor(state.coins),40+state.rescues*12+Math.max(0,state.wave-1)*2); }
 
   function fit(){
-    DPR=Math.min(2,window.devicePixelRatio||1);
+    DPR=Math.min(MOBILE_MODE?1:1.5,window.devicePixelRatio||1);
     const r=canvas.getBoundingClientRect();
     W=r.width; H=r.height; tankBottom=H-150;
     canvas.width=Math.floor(W*DPR); canvas.height=Math.floor(H*DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality=MOBILE_MODE?"low":"medium";
     buildDecor();
   }
   addEventListener("resize",fit,{passive:true});
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden){
+      last=0;
+      lastDraw=0;
+    }else{
+      last=performance.now();
+      lastDraw=last;
+    }
+  },{passive:true});
 
   function buildDecor(){
     state.bubbles=[];
-    for(let i=0;i<Math.max(28,Math.floor(W/14));i++){
+    for(let i=0;i<(MOBILE_MODE?Math.max(12,Math.floor(W/32)):Math.max(20,Math.floor(W/20)));i++){
       state.bubbles.push({
         x:Math.random()*W,
         y:tankTop+Math.random()*(tankBottom-tankTop),
@@ -271,7 +285,7 @@
     }
 
     state.dust=[];
-    for(let i=0;i<Math.max(45,Math.floor(W/8));i++){
+    for(let i=0;i<(MOBILE_MODE?Math.max(14,Math.floor(W/28)):Math.max(28,Math.floor(W/14)));i++){
       state.dust.push({
         x:Math.random()*W,
         y:tankTop+Math.random()*(tankBottom-tankTop),
@@ -282,7 +296,7 @@
     }
 
     state.distantFish=[];
-    for(let i=0;i<14;i++){
+    for(let i=0;i<(MOBILE_MODE?6:10);i++){
       state.distantFish.push({
         x:Math.random()*(W+180)-90,
         y:tankTop+55+Math.random()*Math.max(80,tankBottom-tankTop-170),
@@ -295,9 +309,9 @@
     }
 
     state.rocks=[];
-    for(let i=0;i<8;i++){
+    for(let i=0;i<(MOBILE_MODE?5:7);i++){
       state.rocks.push({
-        x:20+i*(W-40)/7+(Math.random()*24-12),
+        x:20+i*(W-40)/Math.max(1,(MOBILE_MODE?4:6))+(Math.random()*24-12),
         w:30+Math.random()*52,
         h:18+Math.random()*44,
         shade:Math.random()
@@ -305,9 +319,9 @@
     }
 
     state.seaweed=[];
-    for(let i=0;i<14;i++){
+    for(let i=0;i<(MOBILE_MODE?8:12);i++){
       state.seaweed.push({
-        x:10+i*(W-20)/13+(Math.random()*18-9),
+        x:10+i*(W-20)/Math.max(1,(MOBILE_MODE?7:11))+(Math.random()*18-9),
         h:32+Math.random()*96,
         phase:Math.random()*6.28,
         hue:145+Math.random()*45
@@ -315,9 +329,9 @@
     }
 
     state.corals=[];
-    for(let i=0;i<10;i++){
+    for(let i=0;i<(MOBILE_MODE?6:9);i++){
       state.corals.push({
-        x:20+i*(W-40)/9+(Math.random()*18-9),
+        x:20+i*(W-40)/Math.max(1,(MOBILE_MODE?5:8))+(Math.random()*18-9),
         h:42+Math.random()*92,
         kind:i%4,
         hue:[18,288,340,175][i%4]
@@ -681,9 +695,10 @@
 
     ctx.save();
     ctx.globalCompositeOperation="screen";
-    for(let i=0;i<8;i++){
+    for(let i=0;i<(MOBILE_MODE?4:6);i++){
       const sway=Math.sin(state.elapsed*.22+i*.9)*35;
-      const x=W*(i/7)+sway-90;
+      const rayCount=MOBILE_MODE?4:6;
+      const x=W*(i/Math.max(1,rayCount-1))+sway-90;
       const ray=ctx.createLinearGradient(x,tankTop,x+120,tankBottom);
       ray.addColorStop(0,"rgba(215,254,255,.23)");
       ray.addColorStop(1,"rgba(120,230,240,0)");
@@ -702,7 +717,7 @@
     ctx.globalAlpha=.23;
     ctx.strokeStyle="#d6ffff";
     ctx.lineWidth=2;
-    for(let y=tankTop+18;y<tankTop+88;y+=22){
+    for(let y=tankTop+22;y<tankTop+(MOBILE_MODE?62:84);y+=(MOBILE_MODE?32:24)){
       ctx.beginPath();
       for(let x=-30;x<=W+30;x+=18){
         const yy=y+Math.sin(x*.045+state.elapsed*.8+y*.03)*4;
@@ -796,7 +811,7 @@
     ctx.globalAlpha=.18;
     ctx.strokeStyle="#fff1b7";
     ctx.lineWidth=1.1;
-    for(let y=tankBottom+2;y<H;y+=14){
+    for(let y=tankBottom+4;y<H;y+=(MOBILE_MODE?24:17)){
       ctx.beginPath();
       for(let x=0;x<=W;x+=20){
         const yy=y+Math.sin(x*.08+y*.04)*2.5;
@@ -852,7 +867,7 @@
       ctx.save();
       ctx.translate(c.x,tankBottom+8);
       ctx.shadowColor="rgba(0,0,0,.22)";
-      ctx.shadowBlur=5;
+      ctx.shadowBlur=MOBILE_MODE?0:3;
       ctx.shadowOffsetY=3;
 
       if(c.kind===0){
@@ -960,7 +975,9 @@
   function drawScaleSparkles(points,color="rgba(255,255,255,.30)"){
     ctx.save();
     ctx.fillStyle=color;
-    for(const [x,y,r] of points){
+    const step=MOBILE_MODE?2:1;
+    for(let i=0;i<points.length;i+=step){
+      const [x,y,r]=points[i];
       ctx.beginPath();
       ctx.ellipse(x,y,r,r*.52,-.25,0,Math.PI*2);
       ctx.fill();
@@ -988,8 +1005,8 @@
     ctx.restore();
 
     ctx.shadowColor="rgba(0,20,30,.30)";
-    ctx.shadowBlur=12;
-    ctx.shadowOffsetY=5;
+    ctx.shadowBlur=MOBILE_MODE?0:5;
+    ctx.shadowOffsetY=MOBILE_MODE?0:3;
 
     if(t.body==="gold"){
       ctx.save();
@@ -1370,9 +1387,17 @@
   }
 
   function loop(t){
-    const dt=Math.min(.034,(t-last)/1000||0); last=t;
+    requestAnimationFrame(loop);
+    if(!lastDraw){ lastDraw=t; last=t; }
+    const elapsed=t-lastDraw;
+    if(elapsed<FRAME_MS) return;
+
+    const dt=Math.min(.05,(t-last)/1000||0);
+    last=t;
+    lastDraw=t-(elapsed%FRAME_MS);
+
     if(running&&!paused) update(dt);
-    draw(); requestAnimationFrame(loop);
+    draw();
   }
 
   function pointerPos(ev){
