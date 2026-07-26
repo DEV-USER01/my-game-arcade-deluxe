@@ -274,7 +274,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน SFX +50%: เพิ่มความดังเอฟเฟกต์ประมาณ 50% โดยไม่เพิ่มเพลงพื้นหลัง</p>
+      <p>เวอร์ชัน Relaxing Music: เพิ่มเพลงพื้นหลังแนวชิล ผ่อนคลาย และตั้งระดับเพลง 100%</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -325,7 +325,7 @@
         <div class="settingIcon">🎵</div>
         <div class="settingMeta">
           <b>เพลงพื้นหลัง</b>
-          <small>ดนตรีบรรยากาศใต้น้ำแบบเบา ๆ ระหว่างเลี้ยงปลา</small>
+          <small>เพลงใต้น้ำแนวชิล สบาย และผ่อนคลาย • ระดับเสียง 100%</small>
         </div>
         <button id="musicToggleBtn" class="audioToggle on" type="button">เปิด</button>
       </div>
@@ -633,7 +633,7 @@
       musicBtn.setAttribute("aria-pressed",String(audioSettings.musicEnabled));
     }
     if(status){
-      status.textContent=`เอฟเฟกต์เสียง: ${audioSettings.sfxEnabled?"เปิด":"ปิด"} • เพลงพื้นหลัง: ${audioSettings.musicEnabled?"เปิด":"ปิด"}`;
+      status.textContent=`เอฟเฟกต์เสียง: ${audioSettings.sfxEnabled?"เปิด":"ปิด"} • เพลงพื้นหลัง: ${audioSettings.musicEnabled?"เปิด":"ปิด"} • ระดับเพลง 100%`;
     }
   }
 
@@ -775,16 +775,16 @@
     shimmer.frequency.setValueAtTime(freq*2.002,now);
 
     filter.type="lowpass";
-    filter.frequency.setValueAtTime(1250,now);
-    filter.Q.value=.45;
+    filter.frequency.setValueAtTime(980,now);
+    filter.Q.value=.32;
 
     amp.gain.setValueAtTime(.0001,now);
-    amp.gain.linearRampToValueAtTime(gain,now+Math.min(.7,dur*.28));
-    amp.gain.setValueAtTime(gain,Math.max(now+.1,stop-.9));
+    amp.gain.linearRampToValueAtTime(gain,now+Math.min(1.25,dur*.32));
+    amp.gain.setValueAtTime(gain,Math.max(now+.2,stop-1.45));
     amp.gain.exponentialRampToValueAtTime(.0001,stop);
 
     const shimmerGain=audioCtx.createGain();
-    shimmerGain.gain.value=.13;
+    shimmerGain.gain.value=.07;
 
     osc.connect(filter);
     shimmer.connect(shimmerGain);
@@ -806,25 +806,72 @@
     shimmer.stop(stop+.05);
   }
 
+  function playRelaxingBell(freq=440,dur=1.8,gain=.006,delay=0,pan=0){
+    if(!audioSettings.musicEnabled||!ensureAudio()||!audioMusicGain) return;
+
+    const now=audioCtx.currentTime+Math.max(0,delay);
+    const stop=now+Math.max(.35,dur);
+    const osc=audioCtx.createOscillator();
+    const overtone=audioCtx.createOscillator();
+    const filter=audioCtx.createBiquadFilter();
+    const amp=audioCtx.createGain();
+    const overtoneGain=audioCtx.createGain();
+
+    osc.type="sine";
+    overtone.type="sine";
+    osc.frequency.setValueAtTime(freq,now);
+    overtone.frequency.setValueAtTime(freq*2.01,now);
+    overtoneGain.gain.value=.16;
+
+    filter.type="lowpass";
+    filter.frequency.setValueAtTime(1750,now);
+    filter.Q.value=.25;
+
+    amp.gain.setValueAtTime(.0001,now);
+    amp.gain.exponentialRampToValueAtTime(gain,now+.035);
+    amp.gain.exponentialRampToValueAtTime(.0001,stop);
+
+    osc.connect(filter);
+    overtone.connect(overtoneGain);
+    overtoneGain.connect(filter);
+    filter.connect(amp);
+
+    if(audioCtx.createStereoPanner){
+      const panner=audioCtx.createStereoPanner();
+      panner.pan.value=Math.max(-1,Math.min(1,pan));
+      amp.connect(panner);
+      panner.connect(audioMusicGain);
+    }else{
+      amp.connect(audioMusicGain);
+    }
+
+    osc.start(now);
+    overtone.start(now);
+    osc.stop(stop+.05);
+    overtone.stop(stop+.05);
+  }
+
   function playBackgroundPhrase(){
     if(!audioSettings.musicEnabled||paused||!running||document.hidden) return;
 
+    // คอร์ด Maj7 / add9 ให้บรรยากาศนุ่ม สบาย และไม่เร่งรีบ
     const progressions=[
-      [196,246.94,293.66],
-      [174.61,220,261.63],
-      [146.83,196,246.94],
-      [164.81,207.65,261.63]
+      {pad:[130.81,164.81,196.00,246.94],melody:[392.00,493.88,523.25]},
+      {pad:[110.00,130.81,164.81,196.00],melody:[329.63,392.00,493.88]},
+      {pad:[87.31,130.81,164.81,220.00],melody:[349.23,440.00,523.25]},
+      {pad:[98.00,146.83,164.81,196.00],melody:[392.00,440.00,493.88]}
     ];
-    const chord=progressions[musicPhrase%progressions.length];
+    const phrase=progressions[musicPhrase%progressions.length];
     musicPhrase++;
 
-    playMusicTone(chord[0],4.8,.020,0,-.28);
-    playMusicTone(chord[1],4.5,.014,.16,.20);
-    playMusicTone(chord[2],4.1,.010,.38,.38);
+    playMusicTone(phrase.pad[0],8.0,.020,0,-.34);
+    playMusicTone(phrase.pad[1],7.7,.014,.20,-.08);
+    playMusicTone(phrase.pad[2],7.4,.011,.42,.18);
+    playMusicTone(phrase.pad[3],7.0,.008,.68,.36);
 
-    const sparkle=chord[2]*2;
-    playMusicTone(sparkle,1.35,.0055,.85,-.10);
-    playMusicTone(sparkle*1.125,1.1,.0045,2.45,.18);
+    playRelaxingBell(phrase.melody[0],2.25,.0062,1.10,-.20);
+    playRelaxingBell(phrase.melody[1],2.05,.0055,3.15,.16);
+    playRelaxingBell(phrase.melody[2],2.35,.0050,5.35,.30);
   }
 
   function syncBackgroundMusic(){
@@ -834,11 +881,11 @@
     const now=audioCtx.currentTime;
     audioMusicGain.gain.cancelScheduledValues(now);
     audioMusicGain.gain.setValueAtTime(Math.max(.0001,audioMusicGain.gain.value),now);
-    audioMusicGain.gain.linearRampToValueAtTime(shouldPlay?.24:.0001,now+.32);
+    audioMusicGain.gain.linearRampToValueAtTime(shouldPlay?1.0:.0001,now+.45);
 
     if(shouldPlay&&!musicTimer){
       playBackgroundPhrase();
-      musicTimer=setInterval(playBackgroundPhrase,4800);
+      musicTimer=setInterval(playBackgroundPhrase,7600);
     }else if(!shouldPlay&&musicTimer){
       clearInterval(musicTimer);
       musicTimer=null;
