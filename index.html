@@ -308,7 +308,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Normalized Audio: 100% เป็นระดับเต็มใกล้เคียงเพลงปกติ และลดเสียงตามเปอร์เซ็นต์จริง</p>
+      <p>เวอร์ชัน Audio 200%: เพิ่มเสียงประกอบและเพลงพื้นหลังเป็นสองเท่าจากระดับปกติ</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -350,7 +350,7 @@
         <div class="settingIcon">🔊</div>
         <div class="settingMeta">
           <b>เอฟเฟกต์เสียง</b>
-          <small>เหรียญ อาหาร ซื้อขาย การรักษา และต่อสู้ • ปรับตามเปอร์เซ็นต์จริง</small>
+          <small>เหรียญ อาหาร ซื้อขาย การรักษา และต่อสู้ • ความดังสูงสุด 200%</small>
         </div>
         <button id="sfxToggleBtn" class="audioToggle on" type="button">เปิด</button>
         <div class="volumeControl">
@@ -365,7 +365,7 @@
         <div class="settingIcon">🎵</div>
         <div class="settingMeta">
           <b>เพลงพื้นหลัง</b>
-          <small>เพลงใต้น้ำแนวชิล • 100% คือระดับเต็มใกล้เคียงเพลงปกติ</small>
+          <small>เพลงใต้น้ำแนวชิล • ตั้งความดังสูงสุด 200%</small>
         </div>
         <button id="musicToggleBtn" class="audioToggle on" type="button">เปิด</button>
         <div class="volumeControl">
@@ -697,7 +697,7 @@
       status.textContent=
         `เสียงประกอบ ${Math.round(audioSettings.sfxVolume)}% (${audioSettings.sfxEnabled?"เปิด":"ปิด"})`
         + ` • ดนตรี ${Math.round(audioSettings.musicVolume)}% (${audioSettings.musicEnabled?"เปิด":"ปิด"})`
-        + " • ลดตามเปอร์เซ็นต์จริง";
+        + " • ระดับสูงสุด 200%";
     }
   }
 
@@ -724,8 +724,8 @@
     syncBackgroundMusic();
   }
 
-  const SFX_FULL_VOLUME_GAIN=1.75;
-  const MUSIC_FULL_VOLUME_GAIN=2.80;
+  const SFX_FULL_VOLUME_GAIN=3.50;
+  const MUSIC_FULL_VOLUME_GAIN=5.60;
 
   function volumePercent(value){
     return Math.max(0,Math.min(1,Number(value)/100));
@@ -746,11 +746,11 @@
       audioCtx=new AudioClass();
 
       audioCompressor=audioCtx.createDynamicsCompressor();
-      audioCompressor.threshold.value=-12;
+      audioCompressor.threshold.value=-9;
       audioCompressor.knee.value=18;
-      audioCompressor.ratio.value=5;
+      audioCompressor.ratio.value=7;
       audioCompressor.attack.value=.004;
-      audioCompressor.release.value=.20;
+      audioCompressor.release.value=.24;
 
       audioSfxGain=audioCtx.createGain();
       audioMusicGain=audioCtx.createGain();
