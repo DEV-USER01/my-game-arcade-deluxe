@@ -422,7 +422,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Buff Aura: บัฟถาวรของปลามีออร่าเรืองแสงรอบตัวชัดขึ้นตามชนิดอีเวนต์</p>
+      <p>เวอร์ชัน Event Soundscapes: แต่ละอีเวนต์มีเสียงบรรยากาศเฉพาะตลอดช่วงอีเวนต์</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -3616,119 +3616,36 @@
       : buffs[Math.floor(state.elapsed/1.4)%buffs.length];
     const type=EVENT_TYPES[activeKey]||EVENT_TYPES[buffs[0]];
     const pulse=.5+.5*Math.sin(state.elapsed*4+(f.statusPhase||0));
-    const radius=(25+5*pulse)*f.size;
-    const innerRadius=(10.5+2.2*pulse)*f.size;
-
-    let glowCore="rgba(171,255,244,.36)";
-    let glowOuter="rgba(123,244,255,.06)";
-    let ringA="#abfff4";
-    let ringB="#d7c7ff";
-    let spark="#ffffff";
-
-    if(activeKey==="rainbow"){
-      glowCore="rgba(255,126,195,.38)";
-      glowOuter="rgba(97,201,255,.08)";
-      ringA="#ff7bc0";
-      ringB="#68d8ff";
-      spark="#fff3a0";
-    }else if(activeKey==="storm"){
-      glowCore="rgba(139,216,255,.32)";
-      glowOuter="rgba(88,152,255,.08)";
-      ringA="#8bd8ff";
-      ringB="#d8f2ff";
-      spark="#f6fdff";
-    }else if(activeKey==="gold"){
-      glowCore="rgba(255,224,115,.34)";
-      glowOuter="rgba(255,201,62,.08)";
-      ringA="#ffe173";
-      ringB="#fff6a8";
-      spark="#fff7c9";
-    }
+    const radius=(24+4*pulse)*f.size;
 
     ctx.save();
     ctx.translate(f.x,f.y);
-    ctx.globalCompositeOperation="lighter";
-    ctx.shadowBlur=14+8*pulse;
-    ctx.shadowColor=ringA;
-
-    const aura=ctx.createRadialGradient(0,-1,innerRadius*.2,0,0,radius+12*f.size);
-    aura.addColorStop(0,glowCore);
-    aura.addColorStop(.45,glowOuter);
-    aura.addColorStop(1,"rgba(255,255,255,0)");
-    ctx.fillStyle=aura;
-    ctx.beginPath();
-    ctx.ellipse(0,0,radius+4*f.size,radius*.78+6*f.size,0,0,Math.PI*2);
-    ctx.fill();
-
-    ctx.globalAlpha=.38+.18*pulse;
-    ctx.lineWidth=1.5+f.size*.24;
+    ctx.globalAlpha=.25+.20*pulse;
+    ctx.lineWidth=1.5+f.size*.25;
 
     if(activeKey==="rainbow"){
       ["#ff6688","#ffd45d","#5ee7a4","#61c9ff","#b77cff"].forEach((c,i)=>{
-        ctx.strokeStyle=c;
-        ctx.beginPath();
-        ctx.arc(0,0,radius+i*.7,.55+i*.82,.55+i*.82+1.16);
-        ctx.stroke();
+        ctx.strokeStyle=c;ctx.beginPath();
+        ctx.arc(0,0,radius+i*.9,i*.85,i*.85+1.05);ctx.stroke();
       });
-      for(let i=0;i<5;i++){
-        const a=state.elapsed*1.8+i*(Math.PI*2/5);
-        ctx.fillStyle=["#ff88c0","#ffe37f","#85ffc9","#8ed8ff","#d0adff"][i];
-        ctx.beginPath();
-        ctx.arc(Math.cos(a)*(radius+2),Math.sin(a)*(radius-1),1.3+pulse*.9,0,Math.PI*2);
-        ctx.fill();
-      }
     }else if(activeKey==="storm"){
-      ctx.strokeStyle=ringA;
+      ctx.strokeStyle="#8bd8ff";
       ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle=ringB;
-      ctx.beginPath();
-      ctx.moveTo(-6,-radius+1);ctx.lineTo(0,-radius-8);
-      ctx.lineTo(-2,-radius-2);ctx.lineTo(7,-radius-10);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(radius*.18,-radius*.6);ctx.lineTo(radius*.34,-radius*.92);
-      ctx.lineTo(radius*.2,-radius*.72);ctx.lineTo(radius*.42,-radius*1.02);
-      ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-5,-radius);ctx.lineTo(1,-radius-7);
+      ctx.lineTo(-1,-radius-1);ctx.lineTo(6,-radius-8);ctx.stroke();
     }else if(activeKey==="gold"){
-      ctx.strokeStyle=ringA;ctx.lineWidth=2;
+      ctx.strokeStyle="#ffe173";ctx.lineWidth=2;
       ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
       for(let i=0;i<4;i++){
         const a=i*Math.PI*.5+state.elapsed*.35;
-        ctx.fillStyle=spark;
-        ctx.beginPath();
-        ctx.arc(Math.cos(a)*radius,Math.sin(a)*radius,1.5+pulse,0,Math.PI*2);
-        ctx.fill();
-      }
-      for(let i=0;i<3;i++){
-        const a=state.elapsed*.7+i*(Math.PI*2/3);
-        const x=Math.cos(a)*(radius*.72),y=Math.sin(a)*(radius*.58);
-        ctx.strokeStyle="#fff0ae";
-        ctx.lineWidth=1.1;
-        ctx.beginPath();ctx.moveTo(x-2.3,y);ctx.lineTo(x+2.3,y);ctx.moveTo(x,y-2.3);ctx.lineTo(x,y+2.3);ctx.stroke();
+        ctx.fillStyle="#fff2a5";ctx.beginPath();
+        ctx.arc(Math.cos(a)*radius,Math.sin(a)*radius,1.3+pulse,0,Math.PI*2);ctx.fill();
       }
     }else{
-      ctx.strokeStyle=ringA;
+      ctx.strokeStyle="#abfff4";
       ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
-      ctx.strokeStyle=ringB;
+      ctx.strokeStyle="#d7c7ff";
       ctx.beginPath();ctx.arc(0,0,radius-4,0,Math.PI*2);ctx.stroke();
-      for(let i=0;i<4;i++){
-        const a=state.elapsed*.95+i*(Math.PI*2/4);
-        ctx.fillStyle=spark;
-        ctx.beginPath();
-        ctx.arc(Math.cos(a)*(radius-1),Math.sin(a)*(radius-5),1.1+pulse*.7,0,Math.PI*2);
-        ctx.fill();
-      }
-    }
-
-    // กลีบออร่านุ่ม ๆ รอบตัวปลา
-    for(let i=0;i<6;i++){
-      const a=state.elapsed*.45+i*(Math.PI*2/6)+(f.statusPhase||0)*.08;
-      const px=Math.cos(a)*(radius*.64);
-      const py=Math.sin(a)*(radius*.48);
-      ctx.fillStyle=glowCore.replace(/\.\d+\)$/,'.14)');
-      ctx.beginPath();
-      ctx.arc(px,py,3.2*f.size+1.1*pulse,0,Math.PI*2);
-      ctx.fill();
     }
     ctx.restore();
 
