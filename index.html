@@ -177,7 +177,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Mobile App + องครักษ์: เพิ่มพลังยิงปลาองครักษ์ และย่อฟองสถานะปลาให้ไม่บังหน้าจอ</p>
+      <p>เวอร์ชัน Multi Guardian: องครักษ์ 4 สายพันธุ์ ยิ่งแพงยิ่งยิงแรง พร้อมลดดาเมจศัตรูเพื่อความสมดุล</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -263,6 +263,30 @@
     {key:"sharkEnemy", name:"ฉลามล่าเหยื่อ", emoji:"🦈", hpMul:1.55, speedMul:1.12, damageMul:1.35, rewardMul:1.45, tint:"#8fdcff", minWave:6, weight:1, scale:1.16},
   ];
 
+  const GUARDIAN_TYPES = {
+    sword: {
+      key:"sword", name:"ปลาหางดาบองครักษ์", emoji:"🐟", body:"sword",
+      price:220, damage:3.6, cooldown:.88, speed:1.10, range:205,
+      color:"#48c8ee", desc:"รุ่นเริ่มต้น คล่องตัวและยิงต่อเนื่อง"
+    },
+    pufferGuard: {
+      key:"pufferGuard", name:"ปักเป้าป้อมปืน", emoji:"🐡", body:"puffer",
+      price:480, damage:5.8, cooldown:1.02, speed:.84, range:230,
+      color:"#ffd76a", desc:"เคลื่อนที่ช้า แต่กระสุนหนักและยิงไกล"
+    },
+    ray: {
+      key:"ray", name:"กระเบนสายฟ้า", emoji:"⚡", body:"ray",
+      price:850, damage:8.6, cooldown:.70, speed:1.18, range:255,
+      color:"#a88cff", desc:"รวดเร็ว ยิงสายฟ้าแรงและถี่"
+    },
+    royalShark: {
+      key:"royalShark", name:"ฉลามราชองครักษ์", emoji:"🦈", body:"royalShark",
+      price:1500, damage:13.5, cooldown:.58, speed:1.26, range:285,
+      color:"#7ee8ff", desc:"รุ่นสูงสุด ยิงแรงที่สุดและไล่ล่าเร็ว"
+    }
+  };
+  const MAX_GUARDIANS = 6;
+
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d",{alpha:false,desynchronized:true}) || canvas.getContext("2d");
   const $ = id => document.getElementById(id);
@@ -287,7 +311,6 @@
   };
 
   function pearlCost(){ return Math.round((500*Math.pow(1.55,state.pearlLevel))/10)*10; }
-  function guardianCost(){ return 180 + state.guardians.length*140; }
   function rescueCost(){ return Math.min(Math.floor(state.coins),40+state.rescues*12+Math.max(0,state.wave-1)*2); }
 
   function fit(){
@@ -431,7 +454,8 @@
     try{
       const data = {
         coins:Math.floor(state.coins), foodLevel:state.foodLevel, pearlLevel:state.pearlLevel, wave:state.wave,
-        rescues:state.rescues, soldCount:state.soldCount, salesCoins:state.salesCoins, guardianCount:state.guardians.length,
+        rescues:state.rescues, soldCount:state.soldCount, salesCoins:state.salesCoins,
+        guardianCount:state.guardians.length, guardianTypes:state.guardians.map(g=>g.typeKey||"sword"),
         selectedType:state.selectedType, snail:!!state.snail,
         fish:state.fish.slice(0,28).map(f=>({
           type:f.type, growth:f.growth, health:Math.max(40,f.health), hunger:Math.min(98,f.hunger), hueShift:f.hueShift
@@ -469,8 +493,12 @@
         f.size = Math.min(1.85, f.baseSize + f.growth/140);
         f.hueShift = Number(saved.hueShift)||0;
       });
-      const guardianCount=Math.min(3,Math.max(0,Number(data.guardianCount)||0));
-      for(let i=0;i<guardianCount;i++) spawnGuardian(W*.36+i*70,tankTop+95+i*38);
+      const savedGuardianTypes=Array.isArray(data.guardianTypes)
+        ? data.guardianTypes.slice(0,MAX_GUARDIANS)
+        : Array(Math.min(3,Math.max(0,Number(data.guardianCount)||0))).fill("sword");
+      savedGuardianTypes.forEach((typeKey,i)=>{
+        spawnGuardian(W*.32+(i%3)*74,tankTop+88+Math.floor(i/3)*62,typeKey);
+      });
       toast("โหลดตู้ปลาเดิมแล้ว");
       return true;
     }catch(e){ return false; }
@@ -489,12 +517,14 @@
     });
   }
 
-  function spawnGuardian(x=W*.5,y=tankTop+110){
-    if(state.guardians.length>=3) return false;
+  function spawnGuardian(x=W*.5,y=tankTop+110,typeKey="sword"){
+    if(state.guardians.length>=MAX_GUARDIANS) return false;
+    const type=GUARDIAN_TYPES[typeKey]||GUARDIAN_TYPES.sword;
     const side=Math.random()<.5?-1:1;
     state.guardians.push({
-      x,y,vx:side*(28+Math.random()*10),vy:(Math.random()-.5)*12,dir:side,
-      wobble:Math.random()*8,attackTimer:.25+Math.random()*.45,target:null
+      typeKey:type.key,typeData:type,
+      x,y,vx:side*(28+Math.random()*10)*type.speed,vy:(Math.random()-.5)*12,dir:side,
+      wobble:Math.random()*8,attackTimer:.18+Math.random()*.36,target:null
     });
     return true;
   }
@@ -542,7 +572,7 @@
       x:Math.random()<.5?-55:W+55,y:tankTop+80+Math.random()*(tankBottom-tankTop-190),
       vx:Math.random()<.5?48:-48,hp,maxHp:hp,target:null,wobble:Math.random()*8,
       speed:(34+Math.min(50,baseWave*1.2))*et.speedMul,
-      damage:(34+Math.min(16,baseWave*.6))*et.damageMul,
+      damage:(20+Math.min(10,baseWave*.35))*et.damageMul,
       scale:et.scale || 1
     });
     state.wave++;
@@ -662,17 +692,34 @@
     });
   }
 
+  function buyGuardian(typeKey){
+    const type=GUARDIAN_TYPES[typeKey];
+    if(!type) return;
+    if(state.guardians.length>=MAX_GUARDIANS){
+      toast(`มีปลาองครักษ์ครบ ${MAX_GUARDIANS} ตัวแล้ว`);
+      return;
+    }
+    if(state.coins<type.price){
+      toast("เหรียญไม่พอ");
+      beep(150,.08,"square",.025);
+      return;
+    }
+    state.coins-=type.price;
+    spawnGuardian(W*.5,tankTop+105,type.key);
+    toast(`${type.name} เข้าประจำการแล้ว 🛡️`);
+    beep(760,.08,"triangle",.035);
+    updateUI();renderShop();saveProgress();
+  }
+
   function buy(kind){
-    const prices={food:40+(state.foodLevel-1)*35,snail:120,guardian:guardianCost()};
+    const prices={food:40+(state.foodLevel-1)*35,snail:120};
     const price=prices[kind];
     if(state.coins<price){toast("เหรียญไม่พอ");beep(150,.08,"square",.025);return}
     if(kind==="snail"&&state.snail){toast("มีหอยผู้ช่วยแล้ว");return}
     if(kind==="food"&&state.foodLevel>=5){toast("อาหารระดับสูงสุดแล้ว");return}
-    if(kind==="guardian"&&state.guardians.length>=3){toast("มีปลาองครักษ์ครบ 3 ตัวแล้ว");return}
     state.coins-=price;
     if(kind==="food"){state.foodLevel++;toast("อาหารดีขึ้น ปลาโตไวขึ้น")}
     if(kind==="snail"){state.snail={x:W*.2,y:tankBottom-12,vx:24,dir:1};toast("หอยจะเก็บเหรียญใกล้พื้น")}
-    if(kind==="guardian"){spawnGuardian();toast("ปลาองครักษ์เข้าประจำการแล้ว 🛡️")}
     beep(740,.08,"triangle",.03);updateUI();renderShop();saveProgress();
   }
 
@@ -699,7 +746,7 @@
     ui.coins.textContent=Math.floor(state.coins);
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
     ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`;
-    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • องครักษ์ ${state.guardians.length} • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
+    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
   }
 
   function nearest(arr,x,y,max=1e9){
@@ -741,10 +788,17 @@
     });
 
     ui.upgradeShop.innerHTML="";
+    const guardianUpgrades=Object.values(GUARDIAN_TYPES).map(type=>({
+      emoji:type.emoji,
+      name:type.name,
+      desc:`${type.desc} • พลัง ${type.damage.toFixed(1)} • ระยะ ${type.range} • มี ${state.guardians.filter(g=>g.typeKey===type.key).length} ตัว`,
+      price:state.guardians.length>=MAX_GUARDIANS?null:type.price,
+      action:()=>buyGuardian(type.key)
+    }));
     const upgrades = [
       {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • ปลาโตไวขึ้น`, price:state.foodLevel>=5?null:40+(state.foodLevel-1)*35, action:()=>buy("food")},
       {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:120, action:()=>buy("snail")},
-      {emoji:"🛡️", name:"ปลาองครักษ์", desc:`มี ${state.guardians.length}/3 ตัว • ไล่ล่าและโจมตีศัตรูอัตโนมัติ`, price:state.guardians.length>=3?null:guardianCost(), action:()=>buy("guardian")},
+      ...guardianUpgrades,
       {emoji:"🦪", name:`อัปตู้ Lv.${state.pearlLevel+1}`, desc:"เพิ่มโบนัสถาวร เรียกปลาพิเศษ และออกเหรียญคุ้มขึ้น", price:pearlCost(), action:upgradeTank},
       {emoji:"🛟", name:"หน่วยกู้ภัย", desc:`คืนชีวิตให้ตู้ปลา • ค่าใช้จ่าย ${rescueCost()} เหรียญ`, price:rescueCost(), action:()=>rescueTank(false)},
     ];
@@ -754,7 +808,10 @@
       row.innerHTML=`<div class="shopEmoji">${u.emoji}</div><div class="shopMeta"><b>${u.name}</b><small>${u.desc}</small></div>`;
       const btn=document.createElement("button");
       btn.className="buyBtn";
-      if(u.price==null){ btn.textContent="MAX"; btn.disabled=true; }
+      if(u.price==null){
+        btn.textContent=GUARDIAN_TYPES && Object.values(GUARDIAN_TYPES).some(g=>g.name===u.name)?"เต็ม":"MAX";
+        btn.disabled=true;
+      }
       else { btn.textContent=`${u.price.toLocaleString("th-TH")} 🪙`; btn.disabled=state.coins<u.price; }
       if(u.name==="หอยเก็บเหรียญ" && state.snail) btn.disabled=true;
       btn.onclick=u.action; row.appendChild(btn); ui.upgradeShop.appendChild(row);
@@ -827,38 +884,43 @@
     }
 
     for(const g of state.guardians){
-      g.wobble+=dt*4.2;
+      const gt=g.typeData||GUARDIAN_TYPES[g.typeKey]||GUARDIAN_TYPES.sword;
+      g.typeData=gt;
+      g.wobble+=dt*(4.0+gt.speed*.3);
       g.attackTimer-=dt;
-      g.target=nearest(state.enemies,g.x,g.y,320);
+      g.target=nearest(state.enemies,g.x,g.y,Math.max(330,gt.range+90));
 
       if(g.target){
         const dx=g.target.x-g.x,dy=g.target.y-g.y,d=Math.hypot(dx,dy)||1;
-        const desired=78;
+        const desired=Math.min(105,58+gt.range*.12);
         if(d>desired){
-          g.vx+=(dx/d)*90*dt;
-          g.vy+=(dy/d)*75*dt;
+          g.vx+=(dx/d)*90*gt.speed*dt;
+          g.vy+=(dy/d)*75*gt.speed*dt;
         }else{
-          g.vx+=(-dy/d)*24*dt;
-          g.vy+=(dx/d)*20*dt;
+          g.vx+=(-dy/d)*24*gt.speed*dt;
+          g.vy+=(dx/d)*20*gt.speed*dt;
         }
-        if(d<205&&g.attackTimer<=0){
-          const damage=2.75+state.pearlLevel*.35;
+        if(d<gt.range&&g.attackTimer<=0){
+          const damage=gt.damage+state.pearlLevel*(.22+gt.damage*.025);
           g.target.hp-=damage;
-          state.guardShots.push({x:g.x+g.dir*24,y:g.y-2,tx:g.target.x,ty:g.target.y,life:.22,maxLife:.22});
-          g.attackTimer=Math.max(.48,1.05-state.pearlLevel*.025)+Math.random()*.16;
-          beep(470+Math.random()*90,.025,"triangle",.009);
+          state.guardShots.push({
+            x:g.x+g.dir*24,y:g.y-2,tx:g.target.x,ty:g.target.y,
+            life:.22,maxLife:.22,color:gt.color,power:Math.min(2.2,.75+gt.damage/8),typeKey:gt.key
+          });
+          g.attackTimer=Math.max(.34,gt.cooldown-state.pearlLevel*.012)+Math.random()*.12;
+          beep(460+gt.damage*18+Math.random()*70,.025,"triangle",.009);
         }
       }else{
         const anchorX=W*.5+Math.sin(state.elapsed*.38+g.wobble)*W*.26;
         const anchorY=tankTop+100+Math.sin(state.elapsed*.55+g.wobble*.7)*70;
         const dx=anchorX-g.x,dy=anchorY-g.y,d=Math.hypot(dx,dy)||1;
-        g.vx+=(dx/d)*34*dt;
-        g.vy+=(dy/d)*30*dt;
+        g.vx+=(dx/d)*34*gt.speed*dt;
+        g.vy+=(dy/d)*30*gt.speed*dt;
       }
 
       g.vx*=Math.pow(.38,dt);
       g.vy*=Math.pow(.38,dt);
-      const gs=Math.hypot(g.vx,g.vy),gmax=86;
+      const gs=Math.hypot(g.vx,g.vy),gmax=86*gt.speed;
       if(gs>gmax){g.vx=g.vx/gs*gmax;g.vy=g.vy/gs*gmax}
       g.x+=g.vx*dt;g.y+=g.vy*dt;
       if(Math.abs(g.vx)>2)g.dir=Math.sign(g.vx);
@@ -1598,44 +1660,94 @@
   }
 
   function drawGuardian(g){
+    const gt=g.typeData||GUARDIAN_TYPES[g.typeKey]||GUARDIAN_TYPES.sword;
     ctx.save();
     ctx.translate(g.x,g.y);
     ctx.scale(g.dir,1);
     ctx.rotate(Math.sin(g.wobble)*.045);
-
     const tailSwing=Math.sin(g.wobble*1.7)*.18;
-    ctx.save();ctx.translate(-24,0);ctx.rotate(tailSwing);
-    const tail=ctx.createLinearGradient(-35,0,0,0);
-    tail.addColorStop(0,"#70dcff");tail.addColorStop(1,"#1c82b8");
-    ctx.fillStyle=tail;ctx.strokeStyle="#164f75";ctx.lineWidth=2;
-    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-31,-19);ctx.lineTo(-24,-3);ctx.lineTo(-38,0);ctx.lineTo(-24,4);ctx.lineTo(-31,19);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.restore();
 
-    const body=ctx.createRadialGradient(9,-8,2,0,0,34);
-    body.addColorStop(0,"#dcfbff");body.addColorStop(.35,"#70d8f4");body.addColorStop(.72,"#258ebf");body.addColorStop(1,"#155a86");
-    ctx.fillStyle=body;ctx.strokeStyle="#103f64";ctx.lineWidth=2.4;
-    ctx.beginPath();ctx.moveTo(-27,0);ctx.quadraticCurveTo(-7,-19,20,-14);ctx.quadraticCurveTo(35,-5,31,7);ctx.quadraticCurveTo(22,19,-7,16);ctx.quadraticCurveTo(-24,12,-27,0);ctx.closePath();ctx.fill();ctx.stroke();
+    if(gt.body==="sword"){
+      ctx.save();ctx.translate(-24,0);ctx.rotate(tailSwing);
+      const tail=ctx.createLinearGradient(-35,0,0,0);
+      tail.addColorStop(0,"#70dcff");tail.addColorStop(1,"#1c82b8");
+      ctx.fillStyle=tail;ctx.strokeStyle="#164f75";ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-31,-19);ctx.lineTo(-24,-3);ctx.lineTo(-38,0);ctx.lineTo(-24,4);ctx.lineTo(-31,19);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.restore();
 
-    ctx.fillStyle="#f5cc5b";ctx.strokeStyle="#8b671b";ctx.lineWidth=1.6;
-    ctx.beginPath();ctx.moveTo(-4,-13);ctx.lineTo(6,-27);ctx.lineTo(14,-11);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.beginPath();ctx.moveTo(-3,12);ctx.lineTo(13,23);ctx.lineTo(7,9);ctx.closePath();ctx.fill();ctx.stroke();
+      const body=ctx.createRadialGradient(9,-8,2,0,0,34);
+      body.addColorStop(0,"#dcfbff");body.addColorStop(.35,"#70d8f4");body.addColorStop(.72,"#258ebf");body.addColorStop(1,"#155a86");
+      ctx.fillStyle=body;ctx.strokeStyle="#103f64";ctx.lineWidth=2.4;
+      ctx.beginPath();ctx.moveTo(-27,0);ctx.quadraticCurveTo(-7,-19,20,-14);ctx.quadraticCurveTo(35,-5,31,7);ctx.quadraticCurveTo(22,19,-7,16);ctx.quadraticCurveTo(-24,12,-27,0);ctx.closePath();ctx.fill();ctx.stroke();
 
-    ctx.fillStyle="rgba(255,255,255,.42)";ctx.beginPath();ctx.ellipse(5,-8,14,4,-.2,0,Math.PI*2);ctx.fill();
-    drawFishEye(20,-4,5.2,.15);
-    drawFishMouth(29,4,false);
+      ctx.fillStyle="#f5cc5b";ctx.strokeStyle="#8b671b";ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.moveTo(-4,-13);ctx.lineTo(6,-27);ctx.lineTo(14,-11);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-3,12);ctx.lineTo(13,23);ctx.lineTo(7,9);ctx.closePath();ctx.fill();ctx.stroke();
+      drawFishEye(20,-4,5.2,.15);drawFishMouth(29,4,false);
 
-    ctx.fillStyle="#f4d45c";ctx.strokeStyle="#7b5a17";ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.arc(1,2,9,0,Math.PI*2);ctx.fill();ctx.stroke();
-    ctx.fillStyle="#1a709e";
-    ctx.beginPath();ctx.moveTo(1,-4);ctx.lineTo(6,0);ctx.lineTo(4,7);ctx.lineTo(1,9);ctx.lineTo(-2,7);ctx.lineTo(-4,0);ctx.closePath();ctx.fill();
+    }else if(gt.body==="puffer"){
+      ctx.save();ctx.translate(-18,1);ctx.rotate(tailSwing*.7);
+      ctx.fillStyle="#dbab48";ctx.strokeStyle="#765321";ctx.lineWidth=1.8;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(-18,-14,-30,-8);ctx.quadraticCurveTo(-24,0,-30,10);ctx.quadraticCurveTo(-16,15,0,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+
+      for(let i=0;i<13;i++){
+        const a=i*Math.PI*2/13;
+        ctx.strokeStyle="#826325";ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.moveTo(Math.cos(a)*20,Math.sin(a)*18);ctx.lineTo(Math.cos(a)*28,Math.sin(a)*25);ctx.stroke();
+      }
+      const body=ctx.createRadialGradient(8,-9,2,0,0,32);
+      body.addColorStop(0,"#fff4ab");body.addColorStop(.42,"#f5d46a");body.addColorStop(.8,"#c99b3e");body.addColorStop(1,"#765522");
+      ctx.fillStyle=body;ctx.strokeStyle="#60451c";ctx.lineWidth=2.3;
+      ctx.beginPath();ctx.ellipse(0,0,24,22,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#247ba0";ctx.strokeStyle="#12445d";ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.roundRect(-12,-5,14,10,4);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(0,-1);ctx.lineTo(19,-1);ctx.lineTo(19,4);ctx.lineTo(0,4);ctx.closePath();ctx.fill();ctx.stroke();
+      drawFishEye(13,-6,5.7,.15);drawFishMouth(21,5,false);
+
+    }else if(gt.body==="ray"){
+      const wing=ctx.createLinearGradient(-34,-20,32,20);
+      wing.addColorStop(0,"#6142bd");wing.addColorStop(.42,"#a78cff");wing.addColorStop(.72,"#7ce8ff");wing.addColorStop(1,"#3b62b5");
+      ctx.fillStyle=wing;ctx.strokeStyle="#38227f";ctx.lineWidth=2.2;
+      ctx.beginPath();
+      ctx.moveTo(-35,-2);ctx.quadraticCurveTo(-10,-25,3,-11);ctx.quadraticCurveTo(18,-25,38,-2);
+      ctx.quadraticCurveTo(18,12,3,9);ctx.quadraticCurveTo(-14,14,-35,-2);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle="#b8f6ff";ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(-4,8);ctx.quadraticCurveTo(-12,25,-22,34);ctx.stroke();
+      ctx.fillStyle="rgba(255,255,255,.4)";
+      ctx.beginPath();ctx.ellipse(3,-7,14,4,-.1,0,Math.PI*2);ctx.fill();
+      drawFishEye(12,-4,4.5,.1);
+      ctx.strokeStyle="#efe7ff";ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.moveTo(-20,1);ctx.lineTo(-7,-8);ctx.lineTo(4,1);ctx.lineTo(18,-9);ctx.stroke();
+
+    }else{
+      ctx.save();ctx.translate(-28,0);ctx.rotate(tailSwing*.55);
+      const tail=ctx.createLinearGradient(-36,0,0,0);
+      tail.addColorStop(0,"#5a86a1");tail.addColorStop(1,"#a9d9e8");
+      ctx.fillStyle=tail;ctx.strokeStyle="#263f60";ctx.lineWidth=2.3;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-31,-21);ctx.lineTo(-25,-5);ctx.lineTo(-40,0);ctx.lineTo(-25,5);ctx.lineTo(-31,21);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+
+      const body=ctx.createLinearGradient(-31,-13,35,16);
+      body.addColorStop(0,"#244c72");body.addColorStop(.36,"#4f8eb2");body.addColorStop(.62,"#bde7ef");body.addColorStop(1,"#315d83");
+      ctx.fillStyle=body;ctx.strokeStyle="#182f50";ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(-30,0);ctx.quadraticCurveTo(-7,-20,23,-14);ctx.quadraticCurveTo(39,-7,38,4);ctx.quadraticCurveTo(28,20,-5,17);ctx.quadraticCurveTo(-24,13,-30,0);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle="#f6cf58";ctx.strokeStyle="#765c17";ctx.lineWidth=1.7;
+      ctx.beginPath();ctx.moveTo(-2,-13);ctx.lineTo(8,-31);ctx.lineTo(18,-11);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-1,12);ctx.lineTo(17,24);ctx.lineTo(8,9);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.arc(2,2,9,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#225778";ctx.beginPath();ctx.moveTo(2,-4);ctx.lineTo(7,0);ctx.lineTo(5,7);ctx.lineTo(2,9);ctx.lineTo(-1,7);ctx.lineTo(-3,0);ctx.closePath();ctx.fill();
+      drawFishEye(23,-5,5.1,.2);drawFishMouth(32,4,false);
+    }
+
     ctx.restore();
 
     ctx.save();
-    ctx.font="700 9px system-ui,sans-serif";
+    ctx.font="700 8.5px system-ui,sans-serif";
     ctx.textAlign="center";ctx.textBaseline="middle";
+    const label=g.target?"⚔️ ป้องกัน":`${gt.emoji} เฝ้าระวัง`;
+    const bw=Math.min(70,Math.max(43,ctx.measureText(label).width+10));
     ctx.fillStyle="rgba(3,35,53,.80)";
-    drawRoundRect(g.x-22,g.y-36,44,16,8);ctx.fill();
-    ctx.fillStyle="#fff4a8";ctx.fillText(g.target?"⚔️ ป้องกัน":"🛡️ เฝ้าระวัง",g.x,g.y-28);
+    drawRoundRect(g.x-bw/2,g.y-37,bw,16,8);ctx.fill();
+    ctx.fillStyle="#fff4a8";ctx.fillText(label,g.x,g.y-29);
     ctx.restore();
   }
 
@@ -1645,11 +1757,13 @@
     const y=s.y+(s.ty-s.y)*progress;
     ctx.save();
     ctx.globalCompositeOperation="screen";
-    ctx.strokeStyle="rgba(161,239,255,.82)";ctx.lineWidth=3;
+    const power=s.power||1;
+    ctx.strokeStyle=s.color||"rgba(161,239,255,.82)";ctx.globalAlpha=.78;ctx.lineWidth=2.4+power;
     ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(x,y);ctx.stroke();
-    ctx.fillStyle="#e8fdff";ctx.beginPath();ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle="rgba(104,216,255,.72)";ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();
+    ctx.globalAlpha=1;
+    ctx.fillStyle="#f2feff";ctx.beginPath();ctx.arc(x,y,4.5+power*1.4,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle=s.color||"rgba(104,216,255,.72)";ctx.lineWidth=1.2+power*.35;
+    ctx.beginPath();ctx.arc(x,y,7+power*2.2,0,Math.PI*2);ctx.stroke();
     ctx.restore();
   }
 
