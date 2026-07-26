@@ -226,7 +226,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Enemy Health Update: ลดเลือดศัตรูลงอีก ทำให้กำจัดได้เร็วขึ้น</p>
+      <p>เวอร์ชัน Easy Enemy Update: ศัตรูเลือดน้อยมาก ตายไว และเว้นช่วงบุกนานขึ้น</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -383,7 +383,7 @@
 
   const state = {
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
-    snail:null, elapsed:0, nextEnemy:38, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
+    snail:null, elapsed:0, nextEnemy:50, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
     activeEvent:null,nextEventAt:20,lastEventKey:null,eventUiSecond:-1,
     soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
@@ -623,7 +623,7 @@
 
   function reset(loadSaved=false){
     state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];state.guardians=[];state.guardShots=[];
-    state.snail=null;state.elapsed=0;state.nextEnemy=38;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
+    state.snail=null;state.elapsed=0;state.nextEnemy=50;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
     state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
     state.soldCount=0;state.salesCoins=0;
     state.selectedType="goldfish";
@@ -669,7 +669,7 @@
       state.salesCoins = Math.max(0, Number(data.salesCoins)||0);
       state.selectedType = FISH_TYPES[data.selectedType] ? data.selectedType : "goldfish";
       state.snail = data.snail ? {x:W*.2,y:tankBottom-12,vx:24,dir:1} : null;
-      state.elapsed = 0; state.nextEnemy = 32; state.foods=[]; state.coinsDrop=[]; state.enemies=[]; state.guardians=[]; state.guardShots=[];
+      state.elapsed = 0; state.nextEnemy = 45; state.foods=[]; state.coinsDrop=[]; state.enemies=[]; state.guardians=[]; state.guardShots=[];
       state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
       state.fish=[];
       if(data.fish.length===0) data.fish.push({type:"goldfish"});
@@ -784,7 +784,7 @@
       for(let i=0;i<weight;i++) weightedPool.push(et);
     });
     const et = weightedPool[Math.floor(Math.random()*weightedPool.length)] || ENEMY_TYPES[0];
-    const hp = Math.max(4, Math.floor((4+baseWave*1.0) * et.hpMul));
+    const hp = Math.max(2, Math.floor((2+baseWave*.55) * et.hpMul));
     state.enemies.push({
       key:et.key, type:et,
       x:Math.random()<.5?-55:W+55,y:tankTop+80+Math.random()*(tankBottom-tankTop-190),
@@ -794,7 +794,7 @@
       scale:et.scale || 1
     });
     state.wave++;
-    state.nextEnemy=state.elapsed+Math.max(20,48-Math.min(28,baseWave*.80));
+    state.nextEnemy=state.elapsed+Math.max(28,58-Math.min(30,baseWave*.65));
     toast(`${et.name} บุก! แตะเพื่อโจมตี`);
     beep(100,.24,"sawtooth",.04); updateUI();
   }
