@@ -228,7 +228,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Enhanced Audio: ปรับเสียงเหรียญ อาหาร การรักษา อีเวนต์ และการต่อสู้ใหม่</p>
+      <p>เวอร์ชัน Catfish Helper: เพิ่มปลาดุกผู้ช่วยราคา 2,000 เก็บอาหารตกพื้นและคืนเงิน</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -386,7 +386,7 @@
 
   const state = {
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
-    snail:null, elapsed:0, nextEnemy:50, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
+    snail:null, catfishHelper:null, elapsed:0, nextEnemy:50, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
     activeEvent:null,nextEventAt:20,lastEventKey:null,eventUiSecond:-1,
     soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
@@ -401,6 +401,7 @@
     return costs[state.foodLevel]||0;
   }
   function snailCost(){ return 8000; }
+  function catfishHelperCost(){ return 2000; }
   function pearlCost(){
     // อัปตู้แพงขึ้นมาก: เริ่ม 50,000 และเพิ่ม 2.25 เท่าต่อเลเวล
     return Math.round((50000*Math.pow(2.25,state.pearlLevel))/1000)*1000;
@@ -811,7 +812,7 @@
 
   function reset(loadSaved=false){
     state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];state.guardians=[];state.guardShots=[];
-    state.snail=null;state.elapsed=0;state.nextEnemy=50;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
+    state.snail=null;state.catfishHelper=null;state.elapsed=0;state.nextEnemy=50;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
     state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
     state.soldCount=0;state.salesCoins=0;
     state.selectedType="goldfish";
@@ -831,7 +832,8 @@
         coins:Math.floor(state.coins), foodLevel:state.foodLevel, pearlLevel:state.pearlLevel, wave:state.wave,
         rescues:state.rescues, soldCount:state.soldCount, salesCoins:state.salesCoins,
         guardianCount:state.guardians.length, guardianTypes:state.guardians.map(g=>g.typeKey||"sword"),
-        selectedType:state.selectedType, snail:!!state.snail,
+        selectedType:state.selectedType, snail:!!state.snail, catfishHelper:!!state.catfishHelper,
+        catfishRefunds:state.catfishHelper?.refunds||0,
         fish:state.fish.slice(0,60).map(f=>({
           type:f.type, growth:f.growth, health:Math.max(20,Math.round(f.health)),
           hunger:Math.min(98,f.hunger), hueShift:f.hueShift,
@@ -857,6 +859,10 @@
       state.salesCoins = Math.max(0, Number(data.salesCoins)||0);
       state.selectedType = FISH_TYPES[data.selectedType] ? data.selectedType : "goldfish";
       state.snail = data.snail ? {x:W*.2,y:tankBottom-12,vx:24,dir:1} : null;
+      state.catfishHelper = data.catfishHelper ? {
+        x:W*.72,y:tankBottom-28,vx:0,vy:0,dir:-1,wobble:Math.random()*8,
+        refunds:Math.max(0,Number(data.catfishRefunds)||0)
+      } : null;
       state.elapsed = 0; state.nextEnemy = 45; state.foods=[]; state.coinsDrop=[]; state.enemies=[]; state.guardians=[]; state.guardShots=[];
       state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
       state.fish=[];
@@ -955,7 +961,7 @@
     if(state.coins<=0){ toast("เหรียญหมด — รอปลาออกเหรียญ"); return; }
     if(state.foods.length>=10){ toast("อาหารในตู้เยอะแล้ว"); return; }
     state.coins-=1;
-    state.foods.push({x,y,vy:30+state.foodLevel*8,life:14,size:5+state.foodLevel*1.6});
+    state.foods.push({x,y,vy:30+state.foodLevel*8,life:14,size:5+state.foodLevel*1.6,refundValue:1,grounded:false});
     sfx("feed"); updateUI(); saveProgress();
   }
 
@@ -1138,14 +1144,21 @@
   }
 
   function buy(kind){
-    const prices={food:foodUpgradeCost(),snail:snailCost()};
+    const prices={food:foodUpgradeCost(),snail:snailCost(),catfish:catfishHelperCost()};
     const price=prices[kind];
     if(state.coins<price){toast("เหรียญไม่พอ");sfx("error");return}
     if(kind==="snail"&&state.snail){toast("มีหอยผู้ช่วยแล้ว");return}
+    if(kind==="catfish"&&state.catfishHelper){toast("มีปลาดุกผู้ช่วยแล้ว");return}
     if(kind==="food"&&state.foodLevel>=5){toast("อาหารระดับสูงสุดแล้ว");return}
     state.coins-=price;
     if(kind==="food"){state.foodLevel++;toast("อาหารดีขึ้น ปลาโตไวขึ้น")}
     if(kind==="snail"){state.snail={x:W*.2,y:tankBottom-12,vx:24,dir:1};toast("หอยจะเก็บเหรียญใกล้พื้น")}
+    if(kind==="catfish"){
+      state.catfishHelper={
+        x:W*.72,y:tankBottom-28,vx:0,vy:0,dir:-1,wobble:Math.random()*8,refunds:0
+      };
+      toast("ปลาดุกผู้ช่วยจะเก็บอาหารที่ตกพื้น แล้วคืนเงิน 1 เหรียญต่อเม็ด");
+    }
     sfx("buy");updateUI();renderShop();saveProgress();
   }
 
@@ -1214,7 +1227,10 @@
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
     const eventLabel=state.activeEvent?` • ${state.activeEvent.type.icon} ${state.activeEvent.type.name}`:"";
     ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด${eventLabel}`;
-    ui.tankStats.textContent=`ปลา ${state.fish.length}/${fishCapacity()} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
+    const helperText=state.catfishHelper
+      ? ` • ปลาดุกคืนเงิน ${state.catfishHelper.refunds||0}`
+      : "";
+    ui.tankStats.textContent=`ปลา ${state.fish.length}/${fishCapacity()} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount}${helperText} • กู้ภัย ${state.rescues} ครั้ง`;
     const healBtn=$("healBtn");
     if(healBtn){
       const cost=healFishCost();
@@ -1275,6 +1291,14 @@
     const upgrades = [
       {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • โตไวและฟื้นเลือดมากขึ้นเมื่อกิน`, price:state.foodLevel>=5?null:foodUpgradeCost(), action:()=>buy("food")},
       {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:snailCost(), action:()=>buy("snail")},
+      {
+        emoji:"🐟", name:"ปลาดุกคืนอาหาร",
+        desc:state.catfishHelper
+          ? `มีปลาดุกผู้ช่วยแล้ว • คืนเงินสะสม ${state.catfishHelper.refunds||0} เหรียญ`
+          : "มีได้ 1 ตัว • เก็บอาหารที่ตกพื้นและคืนเงิน 1 เหรียญต่อเม็ด",
+        price:state.catfishHelper?null:catfishHelperCost(),
+        action:()=>buy("catfish")
+      },
       ...guardianUpgrades,
       {emoji:"🦪", name:`อัปตู้เป็น Lv.${tankLevel()+1}`, desc:`เพิ่มความจุจาก ${fishCapacity()} เป็น ${fishCapacity()+2} ตัว • ราคาเพิ่มประมาณ 2.25 เท่าทุกเลเวล`, price:pearlCost(), action:upgradeTank},
       {emoji:"🛟", name:"หน่วยกู้ภัย", desc:`คืนชีวิตให้ตู้ปลา • ค่าใช้จ่าย ${rescueCost()} เหรียญ`, price:rescueCost(), action:()=>rescueTank(false)},
@@ -1291,6 +1315,7 @@
       }
       else { btn.textContent=`${u.price.toLocaleString("th-TH")} 🪙`; btn.disabled=state.coins<u.price; }
       if(u.name==="หอยเก็บเหรียญ" && state.snail) btn.disabled=true;
+      if(u.name==="ปลาดุกคืนอาหาร" && state.catfishHelper) btn.disabled=true;
       btn.onclick=u.action; row.appendChild(btn); ui.upgradeShop.appendChild(row);
     });
 
@@ -1307,7 +1332,7 @@
 
     for(let i=state.foods.length-1;i>=0;i--){
       const f=state.foods[i];f.y+=f.vy*dt;f.life-=dt;
-      if(f.y>tankBottom-10){f.y=tankBottom-10;f.vy=0}
+      if(f.y>tankBottom-10){f.y=tankBottom-10;f.vy=0;f.grounded=true}
       if(f.life<=0)state.foods.splice(i,1);
     }
 
@@ -1368,6 +1393,64 @@
       const s=state.snail;s.x+=s.vx*s.dir*dt;if(s.x<30){s.x=30;s.dir=1}if(s.x>W-30){s.x=W-30;s.dir=-1}
       const c=nearest(state.coinsDrop,s.x,s.y,120);
       if(c){let dx=c.x-s.x,dy=c.y-s.y,d=Math.hypot(dx,dy)||1;c.x-=dx/d*65*dt;c.y-=dy/d*65*dt; if(d<24)collectCoin(c);}
+    }
+
+    if(state.catfishHelper){
+      const cf=state.catfishHelper;
+      cf.wobble+=dt*3.2;
+
+      let target=null;
+      let bestDistance=Infinity;
+      for(const food of state.foods){
+        if(!food.grounded&&food.y<tankBottom-16) continue;
+        const d=Math.hypot(food.x-cf.x,food.y-cf.y);
+        if(d<bestDistance){
+          bestDistance=d;
+          target=food;
+        }
+      }
+
+      if(target){
+        const dx=target.x-cf.x;
+        const dy=(tankBottom-27)-cf.y;
+        const d=Math.hypot(dx,dy)||1;
+        cf.vx+=(dx/d)*100*dt;
+        cf.vy+=(dy/d)*55*dt;
+
+        if(bestDistance<25){
+          const idx=state.foods.indexOf(target);
+          if(idx>=0){
+            state.foods.splice(idx,1);
+            const refund=Math.max(1,Number(target.refundValue)||1);
+            state.coins+=refund;
+            cf.refunds=(cf.refunds||0)+refund;
+            sfx("coin",2);
+            updateUI();
+            saveProgress();
+          }
+        }
+      }else{
+        const anchorX=W*.5+Math.sin(state.elapsed*.34+cf.wobble)*W*.32;
+        const anchorY=tankBottom-28+Math.sin(state.elapsed*.72+cf.wobble)*5;
+        const dx=anchorX-cf.x,dy=anchorY-cf.y,d=Math.hypot(dx,dy)||1;
+        cf.vx+=(dx/d)*33*dt;
+        cf.vy+=(dy/d)*24*dt;
+      }
+
+      cf.vx*=Math.pow(.28,dt);
+      cf.vy*=Math.pow(.24,dt);
+      const speed=Math.hypot(cf.vx,cf.vy);
+      const maxSpeed=76;
+      if(speed>maxSpeed){
+        cf.vx=cf.vx/speed*maxSpeed;
+        cf.vy=cf.vy/speed*maxSpeed;
+      }
+      cf.x+=cf.vx*dt;
+      cf.y+=cf.vy*dt;
+      if(Math.abs(cf.vx)>2) cf.dir=Math.sign(cf.vx);
+      if(cf.x<38){cf.x=38;cf.vx=Math.abs(cf.vx)}
+      if(cf.x>W-38){cf.x=W-38;cf.vx=-Math.abs(cf.vx)}
+      cf.y=Math.max(tankBottom-44,Math.min(tankBottom-20,cf.y));
     }
 
     const guardianTotal=Math.max(1,state.guardians.length);
@@ -2890,6 +2973,146 @@
     drawRoundRect(e.x-barW/2,e.y-36*(e.scale||1),barW*(e.hp/e.maxHp),7,4); ctx.fill();
   }
 
+  function drawCatfishHelper(cf){
+    const bob=Math.sin(state.elapsed*4+cf.wobble)*1.4;
+    const tailWave=Math.sin(state.elapsed*5.2+cf.wobble)*4;
+
+    ctx.save();
+    ctx.translate(cf.x,cf.y+bob);
+    ctx.scale(cf.dir,1);
+
+    // เงาพื้นตู้
+    ctx.save();
+    ctx.globalAlpha=.18;
+    ctx.fillStyle="#17343d";
+    ctx.beginPath();
+    ctx.ellipse(-2,14,35,5,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // หาง
+    ctx.fillStyle="#395b62";
+    ctx.strokeStyle="#203b42";
+    ctx.lineWidth=1.7;
+    ctx.beginPath();
+    ctx.moveTo(-27,-1);
+    ctx.quadraticCurveTo(-42,-12-tailWave*.25,-49,-7-tailWave*.18);
+    ctx.quadraticCurveTo(-44,0,-50,10+tailWave*.18);
+    ctx.quadraticCurveTo(-40,13+tailWave*.2,-27,6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ลำตัวยาวของปลาดุก
+    const body=ctx.createLinearGradient(-30,-13,31,13);
+    body.addColorStop(0,"#263f45");
+    body.addColorStop(.38,"#4f7275");
+    body.addColorStop(.72,"#6f9290");
+    body.addColorStop(1,"#334f55");
+    ctx.fillStyle=body;
+    ctx.strokeStyle="#1d3439";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(-31,0);
+    ctx.quadraticCurveTo(-18,-15,8,-14);
+    ctx.quadraticCurveTo(30,-13,37,-3);
+    ctx.quadraticCurveTo(39,9,23,14);
+    ctx.quadraticCurveTo(-4,18,-30,7);
+    ctx.quadraticCurveTo(-35,3,-31,0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ท้อง
+    ctx.fillStyle="rgba(192,218,207,.52)";
+    ctx.beginPath();
+    ctx.ellipse(10,8,23,6,-.04,0,Math.PI*2);
+    ctx.fill();
+
+    // ครีบหลัง
+    ctx.fillStyle="#36575d";
+    ctx.strokeStyle="#203b42";
+    ctx.lineWidth=1.4;
+    ctx.beginPath();
+    ctx.moveTo(-6,-12);
+    ctx.lineTo(3,-25);
+    ctx.lineTo(12,-12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ครีบข้าง
+    ctx.beginPath();
+    ctx.moveTo(2,8);
+    ctx.lineTo(-5,22);
+    ctx.lineTo(16,11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // หัวกว้าง
+    const head=ctx.createRadialGradient(24,-6,2,25,0,19);
+    head.addColorStop(0,"#82a5a0");
+    head.addColorStop(1,"#405f63");
+    ctx.fillStyle=head;
+    ctx.strokeStyle="#1d3439";
+    ctx.lineWidth=1.8;
+    ctx.beginPath();
+    ctx.ellipse(27,0,16,13,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    // ตา
+    ctx.fillStyle="#f3f4da";
+    ctx.beginPath();
+    ctx.arc(31,-5,3.3,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle="#172a2d";
+    ctx.beginPath();
+    ctx.arc(32,-5,1.55,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle="#fff";
+    ctx.beginPath();
+    ctx.arc(32.5,-5.6,.5,0,Math.PI*2);
+    ctx.fill();
+
+    // ปาก
+    ctx.strokeStyle="#172e32";
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.arc(35,3,7,.22,1.55);
+    ctx.stroke();
+
+    // หนวดปลาดุก 6 เส้น
+    ctx.strokeStyle="#b9d2c5";
+    ctx.lineWidth=1.25;
+    const whiskerWave=Math.sin(state.elapsed*3.4+cf.wobble)*2;
+    ctx.beginPath();
+    ctx.moveTo(34,0);ctx.quadraticCurveTo(49,-8+whiskerWave,58,-5+whiskerWave);
+    ctx.moveTo(34,2);ctx.quadraticCurveTo(51,1+whiskerWave*.4,60,5+whiskerWave*.5);
+    ctx.moveTo(33,4);ctx.quadraticCurveTo(47,10+whiskerWave*.4,55,14+whiskerWave*.6);
+    ctx.moveTo(25,7);ctx.quadraticCurveTo(37,17,43,21+whiskerWave*.4);
+    ctx.moveTo(23,-7);ctx.quadraticCurveTo(34,-16,42,-18-whiskerWave*.3);
+    ctx.moveTo(28,-5);ctx.quadraticCurveTo(43,-12,51,-10-whiskerWave*.4);
+    ctx.stroke();
+
+    // ไอคอนคืนเงิน
+    ctx.fillStyle="rgba(3,30,38,.82)";
+    ctx.strokeStyle="rgba(255,239,137,.65)";
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.arc(-4,-22,9,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font="11px system-ui,sans-serif";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillStyle="#ffe36d";
+    ctx.fillText("↩", -4,-22.5);
+
+    ctx.restore();
+  }
+
   function drawSnail(s){
     const bob=Math.sin(state.elapsed*5+s.x*.025)*1.2;
     const feeler=Math.sin(state.elapsed*4.2+s.x*.02)*.08;
@@ -3053,6 +3276,7 @@
     for(const f of state.foods) drawFood(f);
     for(const c of state.coinsDrop) drawCoin(c);
     if(state.snail) drawSnail(state.snail);
+    if(state.catfishHelper) drawCatfishHelper(state.catfishHelper);
     state.fish.forEach(drawFish);
     state.guardians.forEach(drawGuardian);
     state.guardShots.forEach(drawGuardShot);
