@@ -6,14 +6,14 @@
   <meta name="theme-color" content="#06253d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="application-name" content="Aqua Pocket" />
-  <meta name="apple-mobile-web-app-title" content="Aqua Pocket" />
+  <meta name="application-name" content="เพื่อนซี้ใต้ทะเล" />
+  <meta name="apple-mobile-web-app-title" content="เพื่อนซี้ใต้ทะเล" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="description" content="เกมเลี้ยงปลาการ์ตูนใต้ทะเล เล่นบนมือถือและติดตั้งเป็นแอปได้" />
+  <meta name="description" content="เกมเลี้ยงเพื่อนปลาน่ารัก สะสมเหรียญ และปกป้องโลกใต้ทะเล" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
   <link rel="apple-touch-icon" href="./icon-192.png" />
-  <title>Aqua Pocket Deluxe — Mobile App</title>
+  <title>เพื่อนซี้ใต้ทะเล</title>
   <style>
     :root{
       --ink:#e8fbff;
@@ -273,7 +273,7 @@
     }
     .startTitle{
       margin:0;color:#f5fcff;
-      font-size:clamp(28px,7.3vw,45px);line-height:.94;letter-spacing:-1.8px;
+      font-size:clamp(27px,7vw,43px);line-height:1.02;letter-spacing:-1px;
       text-shadow:0 5px 14px rgba(0,26,56,.55)
     }
     .startTitle span{display:block;color:#ffd45f;font-size:.72em;letter-spacing:-1px}
@@ -645,8 +645,8 @@
         </svg>
 
         <div class="startBrand">
-          <div class="startBrandMark">AQUARIUM ADVENTURE</div>
-          <h1 class="startTitle">Aqua Pocket <span>Deluxe</span></h1>
+          <div class="startBrandMark">ผจญภัยโลกใต้น้ำ</div>
+          <h1 class="startTitle">เพื่อนซี้ <span>ใต้ทะเล</span></h1>
           <p class="startTagline">เลี้ยงปลาน่ารัก สะสมเหรียญ และปกป้องโลกใต้น้ำของคุณ</p>
         </div>
 
@@ -4806,7 +4806,7 @@ ${state.activeEvent.type.icon} อีเวนต์: ${state.activeEvent.type.n
       const choice=await deferredInstallPrompt.userChoice;
       deferredInstallPrompt=null;
       if(choice.outcome==="accepted"){
-        toast("กำลังติดตั้ง Aqua Pocket");
+        toast("กำลังติดตั้งเพื่อนซี้ใต้ทะเล");
       }else{
         toast("ยกเลิกการติดตั้ง");
       }
@@ -4820,7 +4820,7 @@ ${state.activeEvent.type.icon} อีเวนต์: ${state.activeEvent.type.n
   addEventListener("appinstalled",()=>{
     deferredInstallPrompt=null;
     updateInstallUI();
-    toast("ติดตั้ง Aqua Pocket สำเร็จแล้ว");
+    toast("ติดตั้งเพื่อนซี้ใต้ทะเลสำเร็จแล้ว");
   });
 
   if("serviceWorker" in navigator){
