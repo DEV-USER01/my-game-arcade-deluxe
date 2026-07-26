@@ -308,7 +308,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Volume Sliders: เพิ่มแถบเลื่อนปรับดนตรีและเสียงประกอบ 0–100%</p>
+      <p>เวอร์ชัน Normalized Audio: 100% เป็นระดับเต็มใกล้เคียงเพลงปกติ และลดเสียงตามเปอร์เซ็นต์จริง</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -350,7 +350,7 @@
         <div class="settingIcon">🔊</div>
         <div class="settingMeta">
           <b>เอฟเฟกต์เสียง</b>
-          <small>เหรียญ อาหาร ซื้อขาย การรักษา อีเวนต์ และการต่อสู้</small>
+          <small>เหรียญ อาหาร ซื้อขาย การรักษา และต่อสู้ • ปรับตามเปอร์เซ็นต์จริง</small>
         </div>
         <button id="sfxToggleBtn" class="audioToggle on" type="button">เปิด</button>
         <div class="volumeControl">
@@ -365,7 +365,7 @@
         <div class="settingIcon">🎵</div>
         <div class="settingMeta">
           <b>เพลงพื้นหลัง</b>
-          <small>เพลงใต้น้ำแนวชิล สบาย และผ่อนคลาย • ระดับเสียง 100%</small>
+          <small>เพลงใต้น้ำแนวชิล • 100% คือระดับเต็มใกล้เคียงเพลงปกติ</small>
         </div>
         <button id="musicToggleBtn" class="audioToggle on" type="button">เปิด</button>
         <div class="volumeControl">
@@ -696,7 +696,8 @@
     if(status){
       status.textContent=
         `เสียงประกอบ ${Math.round(audioSettings.sfxVolume)}% (${audioSettings.sfxEnabled?"เปิด":"ปิด"})`
-        + ` • ดนตรี ${Math.round(audioSettings.musicVolume)}% (${audioSettings.musicEnabled?"เปิด":"ปิด"})`;
+        + ` • ดนตรี ${Math.round(audioSettings.musicVolume)}% (${audioSettings.musicEnabled?"เปิด":"ปิด"})`
+        + " • ลดตามเปอร์เซ็นต์จริง";
     }
   }
 
@@ -723,12 +724,19 @@
     syncBackgroundMusic();
   }
 
+  const SFX_FULL_VOLUME_GAIN=1.75;
+  const MUSIC_FULL_VOLUME_GAIN=2.80;
+
+  function volumePercent(value){
+    return Math.max(0,Math.min(1,Number(value)/100));
+  }
+
   function sfxVolumeGain(){
-    return 1.5*Math.max(0,Math.min(1,audioSettings.sfxVolume/100));
+    return SFX_FULL_VOLUME_GAIN*volumePercent(audioSettings.sfxVolume);
   }
 
   function musicVolumeGain(){
-    return Math.max(0,Math.min(1,audioSettings.musicVolume/100));
+    return MUSIC_FULL_VOLUME_GAIN*volumePercent(audioSettings.musicVolume);
   }
 
   function ensureAudio(){
@@ -738,11 +746,11 @@
       audioCtx=new AudioClass();
 
       audioCompressor=audioCtx.createDynamicsCompressor();
-      audioCompressor.threshold.value=-16;
-      audioCompressor.knee.value=16;
-      audioCompressor.ratio.value=6;
-      audioCompressor.attack.value=.003;
-      audioCompressor.release.value=.16;
+      audioCompressor.threshold.value=-12;
+      audioCompressor.knee.value=18;
+      audioCompressor.ratio.value=5;
+      audioCompressor.attack.value=.004;
+      audioCompressor.release.value=.20;
 
       audioSfxGain=audioCtx.createGain();
       audioMusicGain=audioCtx.createGain();
@@ -752,7 +760,7 @@
         ? Math.max(.0001,sfxVolumeGain())
         : .0001;
       audioMusicGain.gain.value=.0001;
-      audioMaster.gain.value=1.12;
+      audioMaster.gain.value=1.0;
 
       audioSfxGain.connect(audioCompressor);
       audioMusicGain.connect(audioCompressor);
@@ -939,14 +947,14 @@
     const phrase=progressions[musicPhrase%progressions.length];
     musicPhrase++;
 
-    playMusicTone(phrase.pad[0],8.0,.020,0,-.34);
-    playMusicTone(phrase.pad[1],7.7,.014,.20,-.08);
-    playMusicTone(phrase.pad[2],7.4,.011,.42,.18);
-    playMusicTone(phrase.pad[3],7.0,.008,.68,.36);
+    playMusicTone(phrase.pad[0],8.0,.040,0,-.34);
+    playMusicTone(phrase.pad[1],7.7,.028,.20,-.08);
+    playMusicTone(phrase.pad[2],7.4,.022,.42,.18);
+    playMusicTone(phrase.pad[3],7.0,.016,.68,.36);
 
-    playRelaxingBell(phrase.melody[0],2.25,.0062,1.10,-.20);
-    playRelaxingBell(phrase.melody[1],2.05,.0055,3.15,.16);
-    playRelaxingBell(phrase.melody[2],2.35,.0050,5.35,.30);
+    playRelaxingBell(phrase.melody[0],2.25,.0124,1.10,-.20);
+    playRelaxingBell(phrase.melody[1],2.05,.0110,3.15,.16);
+    playRelaxingBell(phrase.melody[2],2.35,.0100,5.35,.30);
   }
 
   function syncBackgroundMusic(){
