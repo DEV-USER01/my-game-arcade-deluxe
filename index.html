@@ -174,7 +174,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Mobile App + องครักษ์: เพิ่มปลาองครักษ์โจมตีอัตโนมัติ พร้อมฟองความคิดและสถานะของปลาแต่ละตัว</p>
+      <p>เวอร์ชัน Mobile App + องครักษ์: เพิ่มพลังยิงปลาองครักษ์ และย่อฟองสถานะปลาให้ไม่บังหน้าจอ</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -838,7 +838,7 @@
           g.vy+=(dx/d)*20*dt;
         }
         if(d<205&&g.attackTimer<=0){
-          const damage=1.25+state.pearlLevel*.18;
+          const damage=2.75+state.pearlLevel*.35;
           g.target.hp-=damage;
           state.guardShots.push({x:g.x+g.dir*24,y:g.y-2,tx:g.target.x,ty:g.target.y,life:.22,maxLife:.22});
           g.attackTimer=Math.max(.48,1.05-state.pearlLevel*.025)+Math.random()*.16;
@@ -1576,18 +1576,19 @@
     if(important||periodic){
       ctx.save();
       const label=`${status.emoji} ${status.label}`;
-      ctx.font=`700 ${Math.max(10,10.5*f.size)}px system-ui,sans-serif`;
-      const bw=Math.min(100,Math.max(42,ctx.measureText(label).width+15));
+      const statusFont=Math.min(9.5,7.5+f.size);
+      ctx.font=`700 ${statusFont}px system-ui,sans-serif`;
+      const bw=Math.min(82,Math.max(36,ctx.measureText(label).width+12));
       const bx=Math.max(5,Math.min(W-bw-5,f.x-bw/2));
-      const by=Math.max(tankTop+5,f.y-58*f.size);
-      ctx.fillStyle="rgba(255,255,255,.93)";
-      ctx.strokeStyle="rgba(4,51,70,.35)";
-      ctx.lineWidth=1;
-      drawRoundRect(bx,by,bw,22,11);ctx.fill();ctx.stroke();
-      ctx.beginPath();ctx.moveTo(f.x-4,by+21);ctx.lineTo(f.x+3,by+28);ctx.lineTo(f.x+7,by+21);ctx.closePath();ctx.fill();ctx.stroke();
+      const by=Math.max(tankTop+5,f.y-54*f.size);
+      ctx.fillStyle="rgba(255,255,255,.92)";
+      ctx.strokeStyle="rgba(4,51,70,.32)";
+      ctx.lineWidth=.9;
+      drawRoundRect(bx,by,bw,18,9);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.moveTo(f.x-3,by+17);ctx.lineTo(f.x+2,by+23);ctx.lineTo(f.x+6,by+17);ctx.closePath();ctx.fill();ctx.stroke();
       ctx.fillStyle="#10394c";
       ctx.textAlign="center";ctx.textBaseline="middle";
-      ctx.fillText(label,bx+bw/2,by+11);
+      ctx.fillText(label,bx+bw/2,by+9);
       ctx.restore();
     }
   }
@@ -1626,11 +1627,11 @@
     ctx.restore();
 
     ctx.save();
-    ctx.font="700 11px system-ui,sans-serif";
+    ctx.font="700 9px system-ui,sans-serif";
     ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillStyle="rgba(3,35,53,.82)";
-    drawRoundRect(g.x-24,g.y-38,48,19,10);ctx.fill();
-    ctx.fillStyle="#fff4a8";ctx.fillText(g.target?"⚔️ ป้องกัน":"🛡️ เฝ้าระวัง",g.x,g.y-28.5);
+    ctx.fillStyle="rgba(3,35,53,.80)";
+    drawRoundRect(g.x-22,g.y-36,44,16,8);ctx.fill();
+    ctx.fillStyle="#fff4a8";ctx.fillText(g.target?"⚔️ ป้องกัน":"🛡️ เฝ้าระวัง",g.x,g.y-28);
     ctx.restore();
   }
 
@@ -1640,9 +1641,11 @@
     const y=s.y+(s.ty-s.y)*progress;
     ctx.save();
     ctx.globalCompositeOperation="screen";
-    ctx.strokeStyle="rgba(161,239,255,.72)";ctx.lineWidth=2;
+    ctx.strokeStyle="rgba(161,239,255,.82)";ctx.lineWidth=3;
     ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(x,y);ctx.stroke();
-    ctx.fillStyle="#d9fbff";ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#e8fdff";ctx.beginPath();ctx.arc(x,y,5.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="rgba(104,216,255,.72)";ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.stroke();
     ctx.restore();
   }
 
