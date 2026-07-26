@@ -177,7 +177,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Multi Guardian: ปรับราคาองครักษ์ให้สูงขึ้น เพื่อให้การเก็บเหรียญและการเลือกซื้อมีความท้าทายมากขึ้น</p>
+      <p>เวอร์ชันปลาใหม่: เพิ่มสายพันธุ์ปลาใหม่หลายแบบ พร้อมเลือดและราคาที่ต่างกันตามความหายาก</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -234,24 +234,40 @@
   const SAVE_KEY = "aqua-pocket-deluxe-v2";
   const FISH_TYPES = {
     goldfish: {
-      key:"goldfish", name:"ปลาทอง", emoji:"🐠", price:25, desc:"พื้นฐาน สมดุล เก็บเหรียญสม่ำเสมอ",
-      hue:[26,54], body:"gold", growthMul:1.0, hungerMul:1.0, hpMul:1.0, coinBase:2, coinRate:1.0, speed:1.0, rarity:1
+      key:"goldfish", name:"ปลาทอง", emoji:"🐠", price:25, desc:"ปลาเริ่มต้น เลี้ยงง่าย เลือด 100",
+      hue:[26,54], body:"gold", growthMul:1.0, hungerMul:1.0, hpMul:1.0, maxHealth:100, coinBase:2, coinRate:1.0, speed:1.0, rarity:1
     },
     clownfish: {
-      key:"clownfish", name:"ปลาการ์ตูน", emoji:"🐟", price:45, desc:"โตเร็ว คล่องตัว หาอาหารเก่ง",
-      hue:[14,28], body:"clown", growthMul:1.2, hungerMul:1.08, hpMul:0.95, coinBase:2, coinRate:1.05, speed:1.15, rarity:1
+      key:"clownfish", name:"ปลาการ์ตูน", emoji:"🐟", price:45, desc:"คล่องตัวและโตไว เลือด 115",
+      hue:[14,28], body:"clown", growthMul:1.2, hungerMul:1.08, hpMul:1.04, maxHealth:115, coinBase:2, coinRate:1.05, speed:1.15, rarity:1
+    },
+    betta: {
+      key:"betta", name:"ปลากัดแฟนซี", emoji:"🪭", price:75, desc:"ครีบสวย ว่ายไว เลือด 135",
+      hue:[300,340], body:"betta", growthMul:1.08, hungerMul:0.98, hpMul:1.12, maxHealth:135, coinBase:3, coinRate:1.10, speed:1.12, rarity:1
     },
     angelfish: {
-      key:"angelfish", name:"ปลาเทพา", emoji:"🪼", price:80, desc:"มูลค่าเหรียญสูง โตช้ากว่าเล็กน้อย",
-      hue:[186,220], body:"angel", growthMul:0.95, hungerMul:0.92, hpMul:1.08, coinBase:4, coinRate:1.18, speed:0.92, rarity:1
+      key:"angelfish", name:"ปลาเทพา", emoji:"✨", price:95, desc:"หาเหรียญดี สมดุล เลือด 150",
+      hue:[186,220], body:"angel", growthMul:0.95, hungerMul:0.92, hpMul:1.20, maxHealth:150, coinBase:4, coinRate:1.18, speed:0.92, rarity:1
     },
     puffer: {
-      key:"puffer", name:"ปลาพองตัว", emoji:"🐡", price:130, desc:"อึดมาก ทนศัตรูและหิวง่ายน้อยลง",
-      hue:[40,58], body:"puffer", growthMul:0.88, hungerMul:0.82, hpMul:1.28, coinBase:5, coinRate:1.15, speed:0.8, rarity:1
+      key:"puffer", name:"ปลาพองตัว", emoji:"🐡", price:150, desc:"ถึกและทนมาก เลือด 190",
+      hue:[40,58], body:"puffer", growthMul:0.88, hungerMul:0.82, hpMul:1.34, maxHealth:190, coinBase:5, coinRate:1.15, speed:0.8, rarity:1
+    },
+    blueTang: {
+      key:"blueTang", name:"ปลาบลูแทง", emoji:"🔵", price:220, desc:"ตัวแบนว่ายไว ค่าตัวกลางสูง เลือด 230",
+      hue:[205,225], body:"tang", growthMul:1.02, hungerMul:0.94, hpMul:1.42, maxHealth:230, coinBase:6, coinRate:1.22, speed:1.08, rarity:1
     },
     shark: {
-      key:"shark", name:"ฉลามจิ๋ว", emoji:"🦈", price:220, desc:"แพงแต่คุ้ม ออกเหรียญเยอะและว่ายเร็ว",
-      hue:[195,215], body:"shark", growthMul:1.05, hungerMul:1.02, hpMul:1.16, coinBase:7, coinRate:1.35, speed:1.18, rarity:1
+      key:"shark", name:"ฉลามจิ๋ว", emoji:"🦈", price:320, desc:"นักล่าตัวเล็ก แข็งแรง เลือด 280",
+      hue:[195,215], body:"shark", growthMul:1.05, hungerMul:1.02, hpMul:1.48, maxHealth:280, coinBase:8, coinRate:1.35, speed:1.18, rarity:1
+    },
+    koi: {
+      key:"koi", name:"ปลาโค่ย", emoji:"🎏", price:480, desc:"หรูหรา มูลค่าสูง เลือด 340",
+      hue:[18,34], body:"koi", growthMul:0.96, hungerMul:0.88, hpMul:1.56, maxHealth:340, coinBase:10, coinRate:1.46, speed:0.98, rarity:1
+    },
+    lionfish: {
+      key:"lionfish", name:"ปลาสิงโต", emoji:"🦁", price:720, desc:"แพงสุดในร้าน ครีบสวยและถึกมาก เลือด 420",
+      hue:[8,28], body:"lion", growthMul:0.92, hungerMul:0.84, hpMul:1.70, maxHealth:420, coinBase:12, coinRate:1.60, speed:0.9, rarity:1
     }
   };
 
@@ -428,10 +444,14 @@
 
   function randomType(){
     const r = Math.random();
-    if(r>.94) return "shark";
-    if(r>.78) return "puffer";
-    if(r>.58) return "angelfish";
-    if(r>.33) return "clownfish";
+    if(r>.985) return "lionfish";
+    if(r>.955) return "koi";
+    if(r>.915) return "shark";
+    if(r>.84) return "blueTang";
+    if(r>.73) return "puffer";
+    if(r>.57) return "angelfish";
+    if(r>.40) return "betta";
+    if(r>.22) return "clownfish";
     return "goldfish";
   }
 
@@ -458,7 +478,7 @@
         guardianCount:state.guardians.length, guardianTypes:state.guardians.map(g=>g.typeKey||"sword"),
         selectedType:state.selectedType, snail:!!state.snail,
         fish:state.fish.slice(0,28).map(f=>({
-          type:f.type, growth:f.growth, health:Math.max(40,f.health), hunger:Math.min(98,f.hunger), hueShift:f.hueShift
+          type:f.type, growth:f.growth, health:Math.max(20,Math.round(f.health)), hunger:Math.min(98,f.hunger), hueShift:f.hueShift
         }))
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -488,7 +508,8 @@
         spawnFish(50+Math.random()*Math.max(60,W-100), tankTop+60+Math.random()*Math.max(80,tankBottom-tankTop-120), type);
         const f=state.fish[state.fish.length-1];
         f.growth = Math.max(0, Number(saved.growth)||0);
-        f.health = Math.max(40, Number(saved.health)||100);
+        f.maxHealth = (f.typeData && f.typeData.maxHealth) || 100;
+        f.health = Math.max(20, Math.min(f.maxHealth, Number(saved.health)||f.maxHealth));
         f.hunger = Math.min(98, Number(saved.hunger)||35);
         f.size = Math.min(1.85, f.baseSize + f.growth/140);
         f.hueShift = Number(saved.hueShift)||0;
@@ -511,7 +532,7 @@
     state.fish.push({
       type:type.key, typeData:type,
       x,y,vx:side*(24+Math.random()*18)*type.speed,vy:(Math.random()-.5)*14,dir:side,
-      hunger:24+Math.random()*16,growth:0,health:100,coinTimer:6+Math.random()*3,
+      hunger:24+Math.random()*16,growth:0,maxHealth:type.maxHealth||100,health:type.maxHealth||100,coinTimer:6+Math.random()*3,
       hueBase,hueShift:(Math.random()-.5)*10,wobble:Math.random()*10,baseSize:.8+.06*Math.random(),size:.82,
       temperament:.85+Math.random()*.35,statusPhase:Math.random()*9
     });
@@ -529,15 +550,21 @@
     return true;
   }
 
+  function fishHealthRatio(f){
+    const maxHealth=(f.maxHealth||f.typeData?.maxHealth||100);
+    return Math.max(0,Math.min(1,(f.health||0)/Math.max(1,maxHealth)));
+  }
+
   function getFishStatus(f){
     const threat=nearest(state.enemies,f.x,f.y,145);
-    if(f.health<35) return {emoji:"🤕",label:"บาดเจ็บ",level:3};
+    const hpRatio=fishHealthRatio(f);
+    if(hpRatio<.35) return {emoji:"🤕",label:"บาดเจ็บ",level:3};
     if(f.hunger>105) return {emoji:"😵",label:"หิวมาก",level:3};
     if(threat) return {emoji:"😨",label:"กลัวศัตรู",level:3};
-    if(f.health<72) return {emoji:"💔",label:"สุขภาพลด",level:2};
+    if(hpRatio<.72) return {emoji:"💔",label:"สุขภาพลด",level:2};
     if(f.hunger>72) return {emoji:"🍤",label:"หิว",level:2};
     if(f.size>=1.55) return {emoji:"⭐",label:"โตเต็มวัย",level:1};
-    if(f.health>92&&f.hunger<45) return {emoji:"😊",label:"มีความสุข",level:1};
+    if(hpRatio>.92&&f.hunger<45) return {emoji:"😊",label:"มีความสุข",level:1};
     return {emoji:"💙",label:"ปกติ",level:0};
   }
 
@@ -586,7 +613,8 @@
     if(state.coins<cost){ toast("เหรียญไม่พอ"); return; }
     state.coins-=cost; state.pearlLevel++;
     state.fish.forEach(f=>{
-      f.health = 100;
+      f.maxHealth = (f.typeData && f.typeData.maxHealth) || f.maxHealth || 100;
+      f.health = f.maxHealth;
       f.hunger = Math.min(f.hunger,30);
       f.growth += 7;
       f.size = Math.min(1.85, f.baseSize + f.growth/140);
@@ -616,7 +644,7 @@
   function fishSellValue(f){
     const type=f.typeData||FISH_TYPES[f.type]||FISH_TYPES.goldfish;
     const maturity=Math.max(0,Math.min(1,(f.size-.8)/1.05));
-    const healthFactor=.72+.28*Math.max(0,Math.min(1,f.health/100));
+    const healthFactor=.72+.28*fishHealthRatio(f);
     const hungerFactor=1-Math.min(.22,Math.max(0,f.hunger)/500);
     const tankBonus=1+Math.min(.18,state.pearlLevel*.018);
     const raw=type.price*(.32+maturity*.92)*healthFactor*hungerFactor*tankBonus;
@@ -678,7 +706,7 @@
       row.className="shopItem";
       row.innerHTML=`<div class="shopEmoji">${type.emoji}</div>
       <div class="shopMeta"><b>${type.name} • มี ${count} ตัว</b>
-      <small>${best?`ตัวที่ราคาดีที่สุด: ${stage} • ขนาด ${best.size.toFixed(2)} • สุขภาพ ${Math.round(best.health)}%`:"ซื้อหรือเลี้ยงปลาชนิดนี้ก่อน"}</small></div>`;
+      <small>${best?`ตัวที่ราคาดีที่สุด: ${stage} • ขนาด ${best.size.toFixed(2)} • เลือด ${Math.round(best.health)}/${best.maxHealth||best.typeData?.maxHealth||100}`:"ซื้อหรือเลี้ยงปลาชนิดนี้ก่อน"}</small></div>`;
 
       const btn=document.createElement("button");
       btn.className="sellBtn";
@@ -780,7 +808,7 @@
       const row=document.createElement("div");
       row.className="shopItem";
       row.innerHTML=`<div class="shopEmoji">${type.emoji}</div>
-      <div class="shopMeta"><b>${type.name}</b><small>${type.desc}<br>ราคา ${type.price} • เหรียญพื้นฐาน ${type.coinBase}</small></div>`;
+      <div class="shopMeta"><b>${type.name}</b><small>${type.desc}<br>ราคา ${type.price} • เลือด ${type.maxHealth} • เหรียญพื้นฐาน ${type.coinBase}</small></div>`;
       const btn=document.createElement("button");
       btn.className="buyBtn"; btn.textContent=`${type.price} 🪙`; btn.disabled=state.coins<type.price||state.fish.length>=30;
       btn.onclick=()=>buyFish(type.key);
@@ -859,8 +887,9 @@
       if(f.x>W-pad){f.x=W-pad;f.vx=-Math.abs(f.vx)}
       if(f.y<tankTop+40){f.y=tankTop+40;f.vy=Math.abs(f.vy)}
       if(f.y>tankBottom-40){f.y=tankBottom-40;f.vy=-Math.abs(f.vy)}
+      const maxHealth=f.maxHealth||t.maxHealth||100;
       if(f.hunger>100){f.health-=dt*(5.4+(f.hunger-100)*.06)/t.hpMul}
-      else f.health=Math.min(100,f.health+dt*.5*t.hpMul);
+      else f.health=Math.min(maxHealth,f.health+dt*.5*t.hpMul);
       f.coinTimer-=dt;
       if(f.size>1.0&&f.coinTimer<=0){
         const base = t.coinBase;
@@ -1532,6 +1561,203 @@
       drawFishEye(12,-5,5.8,.25);
       drawFishMouth(20,5,true);
 
+    }else if(t.body==="betta"){
+      ctx.save();
+      ctx.translate(-22,0);
+      ctx.rotate(tailSwing*.95);
+      const tail=ctx.createLinearGradient(-30,0,4,0);
+      tail.addColorStop(0,`hsla(${hue+32},92%,66%,.22)`);
+      tail.addColorStop(.5,`hsl(${hue+12},88%,58%)`);
+      tail.addColorStop(1,`hsl(${hue-8},78%,42%)`);
+      ctx.fillStyle=tail;
+      ctx.strokeStyle=`hsl(${hue-22},55%,30%)`;
+      ctx.lineWidth=1.7;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.bezierCurveTo(-12,-16,-34,-28,-42,-10);
+      ctx.bezierCurveTo(-34,-4,-30,4,-41,16);
+      ctx.bezierCurveTo(-30,18,-12,15,0,0);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+
+      const body=ctx.createRadialGradient(11,-7,2,1,1,29);
+      body.addColorStop(0,`hsl(${hue+22},100%,82%)`);
+      body.addColorStop(.35,`hsl(${hue+10},95%,62%)`);
+      body.addColorStop(.8,`hsl(${hue-8},85%,46%)`);
+      body.addColorStop(1,`hsl(${hue-20},70%,30%)`);
+      ctx.fillStyle=body;
+      ctx.strokeStyle=`hsl(${hue-22},52%,28%)`;
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.ellipse(2,0,26,15,0,0,Math.PI*2);
+      ctx.fill();ctx.stroke();
+
+      ctx.save();
+      ctx.rotate(finSwing*.8);
+      ctx.fillStyle=`hsla(${hue+18},90%,70%,.78)`;
+      ctx.strokeStyle=`hsl(${hue-18},55%,32%)`;
+      ctx.lineWidth=1.3;
+      ctx.beginPath();
+      ctx.moveTo(-4,-10);
+      ctx.quadraticCurveTo(5,-33,16,-20);
+      ctx.quadraticCurveTo(9,-9,2,-4);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.rotate(-finSwing*.7);
+      ctx.beginPath();
+      ctx.moveTo(-1,9);
+      ctx.quadraticCurveTo(12,30,22,19);
+      ctx.quadraticCurveTo(10,14,3,8);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+
+      drawScaleSparkles([[-9,-5,2.7],[-1,-8,2.5],[8,-2,2.8],[2,7,2.5]],"rgba(255,255,255,.28)");
+      drawFishEye(18,-4,5.2,.18);
+      drawFishMouth(27,4,true);
+
+    }else if(t.body==="tang"){
+      ctx.save();
+      ctx.translate(-17,0);
+      ctx.rotate(tailSwing*.85);
+      ctx.fillStyle="#f4d74c";
+      ctx.strokeStyle="#785f12";
+      ctx.lineWidth=1.9;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.quadraticCurveTo(-18,-16,-28,-11);
+      ctx.quadraticCurveTo(-22,0,-28,12);
+      ctx.quadraticCurveTo(-16,16,0,0);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+
+      const body=ctx.createRadialGradient(9,-8,2,0,0,33);
+      body.addColorStop(0,"#82d9ff");
+      body.addColorStop(.28,"#49b2f8");
+      body.addColorStop(.8,"#2159c5");
+      body.addColorStop(1,"#163a83");
+      ctx.fillStyle=body;
+      ctx.strokeStyle="#0e2d66";
+      ctx.lineWidth=2.1;
+      ctx.beginPath();
+      ctx.ellipse(1,0,24,20,0,0,Math.PI*2);
+      ctx.fill();ctx.stroke();
+
+      ctx.strokeStyle="#0a1a44";
+      ctx.lineWidth=4.6;
+      ctx.beginPath();
+      ctx.moveTo(-8,-10);
+      ctx.quadraticCurveTo(2,-2,10,8);
+      ctx.stroke();
+
+      ctx.fillStyle="rgba(255,255,255,.26)";
+      ctx.beginPath();ctx.ellipse(-2,-6,9,5,-.2,0,Math.PI*2);ctx.fill();
+      drawFishEye(12,-5,5.2,.2);
+      drawFishMouth(19,4,true);
+
+    }else if(t.body==="koi"){
+      ctx.save();
+      ctx.translate(-22,0);
+      ctx.rotate(tailSwing*.65);
+      ctx.fillStyle="#f59d47";
+      ctx.strokeStyle="#8d4d18";
+      ctx.lineWidth=1.8;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.bezierCurveTo(-18,-20,-34,-16,-40,-8);
+      ctx.bezierCurveTo(-31,-3,-30,3,-40,10);
+      ctx.bezierCurveTo(-26,16,-12,13,0,0);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+
+      const body=ctx.createLinearGradient(-26,-12,29,12);
+      body.addColorStop(0,"#fff6eb");
+      body.addColorStop(.45,"#ffe6d2");
+      body.addColorStop(1,"#ffd0a3");
+      ctx.fillStyle=body;
+      ctx.strokeStyle="#89512b";
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(-24,0);
+      ctx.quadraticCurveTo(-8,-18,16,-15);
+      ctx.quadraticCurveTo(31,-8,30,3);
+      ctx.quadraticCurveTo(22,17,-1,18);
+      ctx.quadraticCurveTo(-18,15,-24,0);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+
+      ctx.fillStyle="#f28c38";
+      [[-7,-6,8,5],[6,4,10,6],[10,-7,8,5]].forEach(p=>{
+        ctx.beginPath();ctx.ellipse(p[0],p[1],p[2],p[3],.18,0,Math.PI*2);ctx.fill();
+      });
+      ctx.fillStyle="#1d1d1d";
+      ctx.beginPath();ctx.arc(-6,1,2.2,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(12,9,1.7,0,Math.PI*2);ctx.fill();
+
+      ctx.fillStyle="rgba(255,170,70,.4)";
+      ctx.beginPath();ctx.ellipse(0,9,11,6,.1,0,Math.PI*2);ctx.fill();
+      drawFishEye(18,-4,5.2,.18);
+      drawFishMouth(26,4,true);
+
+    }else if(t.body==="lion"){
+      ctx.save();
+      ctx.translate(-20,0);
+      ctx.rotate(tailSwing*.72);
+      ctx.fillStyle="#f0b058";
+      ctx.strokeStyle="#84461a";
+      ctx.lineWidth=1.9;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.quadraticCurveTo(-18,-18,-33,-12);
+      ctx.quadraticCurveTo(-27,0,-33,13);
+      ctx.quadraticCurveTo(-18,18,0,0);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.restore();
+
+      for(let i=0;i<8;i++){
+        const x=-6+i*4.7;
+        const tip=-20-(i%2)*7;
+        ctx.strokeStyle="#9d5a2b";
+        ctx.lineWidth=1.4;
+        ctx.beginPath();ctx.moveTo(x,-8);ctx.lineTo(x+2,tip);ctx.stroke();
+      }
+      for(let i=0;i<7;i++){
+        const x=-5+i*4.8;
+        const tip=18+(i%2)*5;
+        ctx.beginPath();ctx.moveTo(x,8);ctx.lineTo(x+2,tip);ctx.stroke();
+      }
+
+      const body=ctx.createRadialGradient(8,-8,2,0,0,30);
+      body.addColorStop(0,"#ffe1af");
+      body.addColorStop(.36,"#f6b86a");
+      body.addColorStop(.8,"#d57b34");
+      body.addColorStop(1,"#8e4f22");
+      ctx.fillStyle=body;
+      ctx.strokeStyle="#6f3d1b";
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.ellipse(1,0,25,15,0,0,Math.PI*2);
+      ctx.fill();ctx.stroke();
+
+      ctx.save();
+      ctx.clip();
+      [-11,-2,7,16].forEach(x=>{
+        ctx.strokeStyle="rgba(132,61,17,.9)";
+        ctx.lineWidth=4;
+        ctx.beginPath();ctx.moveTo(x,-18);ctx.lineTo(x+3,18);ctx.stroke();
+      });
+      ctx.restore();
+
+      drawFishEye(18,-4,5.2,.18);
+      drawFishMouth(26,4,true);
+
     }else if(t.body==="shark"){
       ctx.save();
       ctx.translate(-26,0);
@@ -1621,12 +1847,14 @@
 
     ctx.restore();
 
-    if(f.health<92){
+    const maxHealth=f.maxHealth||t.maxHealth||100;
+    const hpRatio=Math.max(0,Math.min(1,f.health/maxHealth));
+    if(hpRatio<.92){
       const w=48*f.size;
       ctx.fillStyle="rgba(3,28,47,.78)";
       drawRoundRect(f.x-w/2,f.y-43*f.size,w,5,3);ctx.fill();
-      ctx.fillStyle=f.health<35?"#ff5d78":"#63e6a6";
-      drawRoundRect(f.x-w/2,f.y-43*f.size,w*Math.max(0,f.health/100),5,3);ctx.fill();
+      ctx.fillStyle=hpRatio<.35?"#ff5d78":"#63e6a6";
+      drawRoundRect(f.x-w/2,f.y-43*f.size,w*hpRatio,5,3);ctx.fill();
     }
     if(f.hunger>72){
       const w=48*f.size;
@@ -1991,7 +2219,7 @@
     if(fish){
       const status=getFishStatus(fish);
       toast(`${fish.typeData.name} • ${status.emoji} ${status.label}
-❤️ ${Math.round(fish.health)}%   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}`);
+❤️ ${Math.round(fish.health)}/${fish.maxHealth||fish.typeData.maxHealth||100}   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}`);
       return;
     }
     if(p.y>tankTop&&p.y<tankBottom-5) createFood(p.x,p.y);
