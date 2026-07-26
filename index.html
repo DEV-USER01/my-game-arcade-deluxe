@@ -195,7 +195,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Economy Update: ปรับราคาปลา ราคาอัปเกรด และราคาขายปลาให้สูงขึ้นทั้งระบบ</p>
+      <p>เวอร์ชัน Tank Capacity: ตู้เลเวล 1 จุปลา 4 ตัว และเพิ่มความจุอีก 2 ตัวทุกครั้งที่อัปตู้</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -346,6 +346,10 @@
     soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
   };
+
+  function tankLevel(){ return state.pearlLevel+1; }
+  function fishCapacity(){ return 4+state.pearlLevel*2; }
+  function tankHasSpace(){ return state.fish.length<fishCapacity(); }
 
   function foodUpgradeCost(){
     const costs={1:600,2:1500,3:3500,4:8000};
@@ -510,7 +514,7 @@
         rescues:state.rescues, soldCount:state.soldCount, salesCoins:state.salesCoins,
         guardianCount:state.guardians.length, guardianTypes:state.guardians.map(g=>g.typeKey||"sword"),
         selectedType:state.selectedType, snail:!!state.snail,
-        fish:state.fish.slice(0,28).map(f=>({
+        fish:state.fish.slice(0,60).map(f=>({
           type:f.type, growth:f.growth, health:Math.max(20,Math.round(f.health)), hunger:Math.min(98,f.hunger), hueShift:f.hueShift
         }))
       };
@@ -536,7 +540,7 @@
       state.elapsed = 0; state.nextEnemy = 15; state.foods=[]; state.coinsDrop=[]; state.enemies=[]; state.guardians=[]; state.guardShots=[];
       state.fish=[];
       if(data.fish.length===0) data.fish.push({type:"goldfish"});
-      data.fish.slice(0,28).forEach((saved,i)=>{
+      data.fish.slice(0,60).forEach((saved,i)=>{
         const type = FISH_TYPES[saved.type] ? saved.type : "goldfish";
         spawnFish(50+Math.random()*Math.max(60,W-100), tankTop+60+Math.random()*Math.max(80,tankBottom-tankTop-120), type);
         const f=state.fish[state.fish.length-1];
@@ -667,11 +671,11 @@
       f.growth += 7;
       f.size = Math.min(1.85, f.baseSize + f.growth/140);
     });
-    if(state.fish.length < 30){
+    if(tankHasSpace()){
       spawnFish(W*.5, tankTop+100+Math.random()*Math.max(80,tankBottom-tankTop-200), randomType());
     }
     dropCoin(W*.5,tankTop+110,25+state.pearlLevel*10,"gem");
-    toast(`ตู้ระดับ ${state.pearlLevel}! โบนัสถาวรเพิ่มขึ้น`);
+    toast(`ตู้เลเวล ${tankLevel()} แล้ว! ความจุเพิ่มเป็น ${fishCapacity()} ตัว`);
     beep(523,.08,"sine",.05);setTimeout(()=>beep(659,.1,"sine",.05),100);setTimeout(()=>beep(784,.14,"sine",.05),220);
     updateUI(); renderShop(); renderSpeciesStrip(); saveProgress();
   }
@@ -680,7 +684,10 @@
     const type = FISH_TYPES[typeKey];
     if(!type) return;
     if(state.coins < type.price){ toast("เหรียญไม่พอ"); beep(180,.08,"square",.022); return; }
-    if(state.fish.length >= 30){ toast("ตู้ปลาแน่นแล้ว"); return; }
+    if(!tankHasSpace()){
+      toast(`ตู้เลเวล ${tankLevel()} เต็มแล้ว (${state.fish.length}/${fishCapacity()} ตัว) • อัปตู้เพื่อเพิ่มอีก 2 ช่อง`);
+      return;
+    }
     state.coins -= type.price;
     spawnFish(W*.5, tankTop+100+Math.random()*Math.max(80,tankBottom-tankTop-200), type.key);
     state.selectedType = type.key;
@@ -827,7 +834,7 @@
     ui.coins.textContent=Math.floor(state.coins);
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
     ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`;
-    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
+    ui.tankStats.textContent=`ปลา ${state.fish.length}/${fishCapacity()} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
   }
 
   function nearest(arr,x,y,max=1e9){
@@ -863,7 +870,7 @@
       row.innerHTML=`<div class="shopEmoji">${type.emoji}</div>
       <div class="shopMeta"><b>${type.name}</b><small>${type.desc}<br>ราคา ${type.price.toLocaleString("th-TH")} • เลือด ${type.maxHealth} • เหรียญพื้นฐาน ${type.coinBase}</small></div>`;
       const btn=document.createElement("button");
-      btn.className="buyBtn"; btn.textContent=`${type.price.toLocaleString("th-TH")} 🪙`; btn.disabled=state.coins<type.price||state.fish.length>=30;
+      btn.className="buyBtn"; btn.textContent=`${type.price.toLocaleString("th-TH")} 🪙`; btn.disabled=state.coins<type.price||!tankHasSpace();
       btn.onclick=()=>buyFish(type.key);
       row.appendChild(btn); ui.fishShop.appendChild(row);
     });
@@ -883,7 +890,7 @@
       {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • ปลาโตไวขึ้น`, price:state.foodLevel>=5?null:foodUpgradeCost(), action:()=>buy("food")},
       {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:snailCost(), action:()=>buy("snail")},
       ...guardianUpgrades,
-      {emoji:"🦪", name:`อัปตู้ Lv.${state.pearlLevel+1}`, desc:"เพิ่มโบนัสถาวร เรียกปลาพิเศษ และออกเหรียญคุ้มขึ้น", price:pearlCost(), action:upgradeTank},
+      {emoji:"🦪", name:`อัปตู้เป็น Lv.${tankLevel()+1}`, desc:`เพิ่มความจุจาก ${fishCapacity()} เป็น ${fishCapacity()+2} ตัว พร้อมโบนัสถาวร`, price:pearlCost(), action:upgradeTank},
       {emoji:"🛟", name:"หน่วยกู้ภัย", desc:`คืนชีวิตให้ตู้ปลา • ค่าใช้จ่าย ${rescueCost()} เหรียญ`, price:rescueCost(), action:()=>rescueTank(false)},
     ];
     upgrades.forEach(u=>{
