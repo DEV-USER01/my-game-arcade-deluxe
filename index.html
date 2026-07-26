@@ -6,7 +6,14 @@
   <meta name="theme-color" content="#06253d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Aqua Pocket Deluxe — Sharp Mobile</title>
+  <meta name="application-name" content="Aqua Pocket" />
+  <meta name="apple-mobile-web-app-title" content="Aqua Pocket" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="เกมเลี้ยงปลาการ์ตูนใต้ทะเล เล่นบนมือถือและติดตั้งเป็นแอปได้" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <title>Aqua Pocket Deluxe — Mobile App</title>
   <style>
     :root{
       --ink:#e8fbff;
@@ -84,6 +91,13 @@
       color:#03253d;font-weight:950;font-size:18px;box-shadow:0 9px 28px rgba(66,190,255,.3)
     }
     .secondary{margin-top:10px;width:100%;min-height:48px;border:1px solid var(--line);border-radius:15px;background:#082d49}
+    .installBtn{
+      margin-top:10px;width:100%;min-height:50px;border:1px solid rgba(255,213,101,.65);
+      border-radius:15px;background:linear-gradient(135deg,#ffd565,#ffb849);color:#392a08;
+      font-weight:950;font-size:16px;box-shadow:0 8px 24px rgba(255,184,73,.18)
+    }
+    .installBtn:active{transform:translateY(2px)}
+    .installNote{display:block;margin-top:7px;color:var(--muted);font-size:12px}
     .tips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 18px}
     .tip{background:rgba(99,216,255,.08);border:1px solid var(--line);border-radius:14px;padding:10px;font-size:13px}
     .hidden{display:none!important}
@@ -107,6 +121,18 @@
       min-width:92px;min-height:42px;border:0;border-radius:12px;background:#ffd565;color:#3e2f12;font-weight:950
     }
     .buyBtn:disabled{opacity:.45}
+    .marketSummary{
+      margin:10px 0 8px;padding:11px 12px;border:1px solid var(--line);
+      border-radius:14px;background:rgba(4,31,50,.58);color:var(--muted);
+      font-size:13px;line-height:1.45
+    }
+    .sellBtn{
+      min-width:88px;min-height:42px;border:1px solid rgba(100,238,180,.55);
+      border-radius:12px;background:linear-gradient(135deg,#48d99a,#2cb77b);
+      color:#04281b;font-weight:950;padding:7px 10px
+    }
+    .sellBtn:disabled{opacity:.4}
+    .saleValue{color:#89f1be;font-weight:900}
     .sectionTitle{margin:14px 0 8px;font-size:14px;color:#bde8f6;text-transform:uppercase;letter-spacing:.1em}
     .legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
     .legendItem{border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(8,40,63,.55);font-size:12px}
@@ -148,7 +174,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Sharp Mobile: เพิ่มความคมชัดของปลาและตัวอักษร พร้อมคงเฟรมเรต 30 FPS และลดเอฟเฟกต์หนักเพื่อให้เล่นบนมือถือได้ลื่น</p>
+      <p>เวอร์ชัน Mobile App + ตลาดปลา: ภาพปลาคมชัด เล่นลื่น ติดตั้งเป็นแอปได้ และขายปลาที่เลี้ยงโตเพื่อรับเหรียญ</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -162,6 +188,8 @@
       </div>
 
       <button id="startBtn" class="primary">เริ่มเล่น / เล่นต่อ</button>
+      <button id="installBtn" class="installBtn">📲 ติดตั้งเกมเป็นแอป</button>
+      <small id="installNote" class="installNote">ติดตั้งแล้วจะมีไอคอนบนหน้าจอและเปิดเต็มจอเหมือนแอป</small>
       <button id="newBtn" class="secondary">เริ่มใหม่ทั้งหมด</button>
     </div>
   </div>
@@ -184,6 +212,10 @@
 
       <div class="sectionTitle">อัปเกรดตู้ปลา</div>
       <div id="upgradeShop" class="shopGrid"></div>
+
+      <div class="sectionTitle">ตลาดขายปลา</div>
+      <div id="marketSummary" class="marketSummary"></div>
+      <div id="fishMarket" class="shopGrid"></div>
 
       <button id="closeShopBtn" class="secondary">ปิดร้านค้า</button>
     </div>
@@ -232,6 +264,7 @@
   const ui = {
     coins:$("coins"), goal:$("goal"), wave:$("wave"), tankStats:$("tankStats"),
     toast:$("toast"), speciesStrip:$("speciesStrip"), fishShop:$("fishShop"), upgradeShop:$("upgradeShop"),
+    fishMarket:$("fishMarket"), marketSummary:$("marketSummary"),
     shopOverlay:$("shopOverlay"), startOverlay:$("startOverlay"), pauseOverlay:$("pauseOverlay")
   };
 
@@ -244,6 +277,7 @@
   const state = {
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
     snail:null, elapsed:0, nextEnemy:24, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
+    soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
   };
 
@@ -374,6 +408,7 @@
   function reset(loadSaved=false){
     state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];
     state.snail=null;state.elapsed=0;state.nextEnemy=24;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
+    state.soldCount=0;state.salesCoins=0;
     state.selectedType="goldfish";
     if(loadSaved && loadProgress()){
       running=true; paused=false; updateUI(); renderSpeciesStrip(); return;
@@ -389,7 +424,8 @@
     try{
       const data = {
         coins:Math.floor(state.coins), foodLevel:state.foodLevel, pearlLevel:state.pearlLevel, wave:state.wave,
-        rescues:state.rescues, selectedType:state.selectedType, snail:!!state.snail,
+        rescues:state.rescues, soldCount:state.soldCount, salesCoins:state.salesCoins,
+        selectedType:state.selectedType, snail:!!state.snail,
         fish:state.fish.slice(0,28).map(f=>({
           type:f.type, growth:f.growth, health:Math.max(40,f.health), hunger:Math.min(98,f.hunger), hueShift:f.hueShift
         }))
@@ -409,6 +445,8 @@
       state.pearlLevel = Math.max(0, Number(data.pearlLevel)||0);
       state.wave = Math.max(1, Number(data.wave)||1);
       state.rescues = Math.max(0, Number(data.rescues)||0);
+      state.soldCount = Math.max(0, Number(data.soldCount)||0);
+      state.salesCoins = Math.max(0, Number(data.salesCoins)||0);
       state.selectedType = FISH_TYPES[data.selectedType] ? data.selectedType : "goldfish";
       state.snail = data.snail ? {x:W*.2,y:tankBottom-12,vx:24,dir:1} : null;
       state.elapsed = 0; state.nextEnemy = 15; state.foods=[]; state.coinsDrop=[]; state.enemies=[];
@@ -503,6 +541,85 @@
     updateUI(); renderShop(); renderSpeciesStrip(); saveProgress();
   }
 
+  function fishSellValue(f){
+    const type=f.typeData||FISH_TYPES[f.type]||FISH_TYPES.goldfish;
+    const maturity=Math.max(0,Math.min(1,(f.size-.8)/1.05));
+    const healthFactor=.72+.28*Math.max(0,Math.min(1,f.health/100));
+    const hungerFactor=1-Math.min(.22,Math.max(0,f.hunger)/500);
+    const tankBonus=1+Math.min(.18,state.pearlLevel*.018);
+    const raw=type.price*(.32+maturity*.92)*healthFactor*hungerFactor*tankBonus;
+    return Math.max(5,Math.round(raw));
+  }
+
+  function sellBestFish(typeKey){
+    const candidates=state.fish
+      .filter(f=>f.type===typeKey)
+      .sort((a,b)=>fishSellValue(b)-fishSellValue(a));
+
+    if(candidates.length===0){ toast("ไม่มีปลาสายพันธุ์นี้ให้ขาย"); return; }
+    if(state.fish.length<=1){ toast("ต้องเหลือปลาอย่างน้อย 1 ตัวในตู้"); return; }
+
+    const fish=candidates[0];
+    const type=FISH_TYPES[typeKey];
+    const value=fishSellValue(fish);
+    const maturity=fish.size>=1.55?"โตเต็มวัย":fish.size>=1.25?"กำลังโต":"วัยเล็ก";
+
+    const ok=window.confirm(`ขาย${type.name} (${maturity}) ราคา ${value.toLocaleString("th-TH")} เหรียญใช่ไหม?`);
+    if(!ok) return;
+
+    const index=state.fish.indexOf(fish);
+    if(index<0) return;
+
+    state.fish.splice(index,1);
+    state.coins+=value;
+    state.soldCount++;
+    state.salesCoins+=value;
+
+    dropCoin(
+      Math.max(40,Math.min(W-40,fish.x)),
+      Math.max(tankTop+45,Math.min(tankBottom-45,fish.y)),
+      Math.max(5,Math.round(value*.18)),
+      "gem"
+    );
+
+    toast(`ขาย${type.name}แล้ว +${value.toLocaleString("th-TH")} เหรียญ`);
+    beep(660,.06,"triangle",.035);
+    setTimeout(()=>beep(880,.09,"triangle",.03),80);
+    updateUI();
+    renderShop();
+    renderSpeciesStrip();
+    saveProgress();
+  }
+
+  function renderFishMarket(){
+    ui.fishMarket.innerHTML="";
+    ui.marketSummary.innerHTML=`ขายแล้ว <b>${state.soldCount.toLocaleString("th-TH")}</b> ตัว • รายได้สะสม <span class="saleValue">${Math.floor(state.salesCoins).toLocaleString("th-TH")} 🪙</span><br>ราคาขายขึ้นตามขนาด สุขภาพ และระดับตู้ โดยระบบจะเลือกตัวที่ขายได้ราคาสูงที่สุด`;
+
+    Object.values(FISH_TYPES).forEach(type=>{
+      const owned=state.fish.filter(f=>f.type===type.key);
+      const best=owned.slice().sort((a,b)=>fishSellValue(b)-fishSellValue(a))[0]||null;
+      const count=owned.length;
+      const value=best?fishSellValue(best):0;
+      const stage=!best?"ไม่มีปลา":best.size>=1.55?"โตเต็มวัย":best.size>=1.25?"กำลังโต":"วัยเล็ก";
+
+      const row=document.createElement("div");
+      row.className="shopItem";
+      row.innerHTML=`<div class="shopEmoji">${type.emoji}</div>
+      <div class="shopMeta"><b>${type.name} • มี ${count} ตัว</b>
+      <small>${best?`ตัวที่ราคาดีที่สุด: ${stage} • ขนาด ${best.size.toFixed(2)} • สุขภาพ ${Math.round(best.health)}%`:"ซื้อหรือเลี้ยงปลาชนิดนี้ก่อน"}</small></div>`;
+
+      const btn=document.createElement("button");
+      btn.className="sellBtn";
+      btn.type="button";
+      btn.textContent=best?`ขาย ${value.toLocaleString("th-TH")} 🪙`:"ไม่มีปลา";
+      btn.disabled=!best||state.fish.length<=1;
+      btn.onclick=()=>sellBestFish(type.key);
+
+      row.appendChild(btn);
+      ui.fishMarket.appendChild(row);
+    });
+  }
+
   function buy(kind){
     const prices={food:40+(state.foodLevel-1)*35,snail:120};
     const price=prices[kind];
@@ -538,7 +655,7 @@
     ui.coins.textContent=Math.floor(state.coins);
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
     ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`;
-    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • กู้ภัย ${state.rescues} ครั้ง`;
+    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
   }
 
   function nearest(arr,x,y,max=1e9){
@@ -597,6 +714,8 @@
       if(u.name==="หอยเก็บเหรียญ" && state.snail) btn.disabled=true;
       btn.onclick=u.action; row.appendChild(btn); ui.upgradeShop.appendChild(row);
     });
+
+    renderFishMarket();
   }
 
   function update(dt){
@@ -1447,6 +1566,69 @@
   $("pauseBtn").onclick=()=>{ if(!running) return; paused=true; ui.pauseOverlay.classList.remove("hidden"); saveProgress(); };
   $("resumeBtn").onclick=()=>{ paused=false; last=performance.now(); ui.pauseOverlay.classList.add("hidden"); };
   $("restartPauseBtn").onclick=()=>{ localStorage.removeItem(SAVE_KEY); ui.pauseOverlay.classList.add("hidden"); reset(false); };
+
+  // ติดตั้งเป็น Progressive Web App (PWA)
+  let deferredInstallPrompt=null;
+  const installBtn=$("installBtn");
+  const installNote=$("installNote");
+
+  function isStandalone(){
+    return matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+  }
+
+  function updateInstallUI(){
+    if(isStandalone()){
+      installBtn.classList.add("hidden");
+      installNote.textContent="✅ เปิดอยู่ในโหมดแอปแล้ว";
+      return;
+    }
+    installBtn.classList.remove("hidden");
+  }
+
+  addEventListener("beforeinstallprompt",(event)=>{
+    event.preventDefault();
+    deferredInstallPrompt=event;
+    updateInstallUI();
+  });
+
+  installBtn.addEventListener("click",async()=>{
+    if(isStandalone()){
+      toast("ติดตั้งเป็นแอปแล้ว");
+      return;
+    }
+
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      const choice=await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt=null;
+      if(choice.outcome==="accepted"){
+        toast("กำลังติดตั้ง Aqua Pocket");
+      }else{
+        toast("ยกเลิกการติดตั้ง");
+      }
+      return;
+    }
+
+    toast("กดเมนู Chrome ⋮ แล้วเลือก ติดตั้งแอป");
+    installNote.textContent="ใน Chrome กด ⋮ แล้วเลือก “ติดตั้งแอป” หรือ “เพิ่มไปยังหน้าจอหลัก”";
+  });
+
+  addEventListener("appinstalled",()=>{
+    deferredInstallPrompt=null;
+    updateInstallUI();
+    toast("ติดตั้ง Aqua Pocket สำเร็จแล้ว");
+  });
+
+  if("serviceWorker" in navigator){
+    addEventListener("load",()=>{
+      navigator.serviceWorker.register("./sw.js").catch(()=>{
+        installNote.textContent="เปิดเกมผ่านลิงก์ HTTPS แล้วลองใหม่";
+      });
+    });
+  }
+
+  updateInstallUI();
 
   document.addEventListener("visibilitychange",()=>{ if(document.hidden&&running){ saveProgress(); paused=true; ui.pauseOverlay.classList.remove("hidden"); } });
   setInterval(()=>{ if(running&&!paused) saveProgress(); },5000);
