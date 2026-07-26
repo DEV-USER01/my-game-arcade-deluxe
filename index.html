@@ -45,8 +45,13 @@
     .grow{display:flex;flex-direction:column;gap:2px}
     .tiny{font-size:12px;font-weight:650;opacity:.9}
     button{font:inherit;color:inherit}
-    #pauseBtn{width:44px;height:44px;padding:0;border:1px solid var(--line);background:var(--panel);
-      border-radius:15px;font-size:20px;pointer-events:auto}
+    .topActions{display:flex;gap:6px;pointer-events:none}
+    #pauseBtn,#settingsBtn{
+      width:42px;height:44px;padding:0;border:1px solid var(--line);background:var(--panel);
+      border-radius:15px;font-size:19px;pointer-events:auto;
+      box-shadow:0 5px 18px rgba(0,0,0,.22)
+    }
+    #settingsBtn{font-size:18px}
     .home{
       position:absolute;z-index:20;left:10px;top:calc(var(--safe-top) + 52px);width:42px;height:42px;
       display:grid;place-items:center;text-decoration:none;color:inherit;background:var(--panel);
@@ -176,6 +181,44 @@
     .legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
     .legendItem{border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(8,40,63,.55);font-size:12px}
     .legendItem b{display:block;margin-bottom:4px}
+    #settingsOverlay{z-index:260}
+    .settingsCard{width:min(460px,100%);overflow:visible}
+    .settingsHeader{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      margin-bottom:8px
+    }
+    .settingsHeader h2{margin:0}
+    .settingsClose{
+      width:40px;height:40px;border-radius:50%;border:1px solid var(--line);
+      background:#082d49;font-size:22px;font-weight:900
+    }
+    .settingRow{
+      display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+      margin-top:10px;padding:13px;border:1px solid var(--line);
+      border-radius:17px;background:rgba(8,40,63,.72)
+    }
+    .settingIcon{font-size:28px}
+    .settingMeta b{display:block;font-size:15px}
+    .settingMeta small{display:block;margin-top:3px;color:var(--muted);font-size:11px;line-height:1.35}
+    .audioToggle{
+      min-width:74px;min-height:40px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.24);
+      background:#4b5660;color:#f4f7f8;font-weight:950
+    }
+    .audioToggle.on{
+      border-color:rgba(102,239,185,.7);
+      background:linear-gradient(135deg,#4be0a0,#25ad78);color:#05291d
+    }
+    .audioTestBtn{
+      width:100%;min-height:46px;margin-top:12px;border-radius:14px;
+      border:1px solid rgba(255,213,101,.6);
+      background:linear-gradient(135deg,#ffd565,#ffb94e);color:#382808;font-weight:950
+    }
+    .audioStatus{
+      margin:12px 0 0;padding:9px 11px;border-radius:13px;
+      background:rgba(98,231,255,.08);border:1px solid var(--line);
+      color:var(--muted);font-size:11px;line-height:1.4
+    }
     @media (max-width:520px){
       .tips,.legend{grid-template-columns:1fr}
       #bottomBar{gap:4px}
@@ -196,7 +239,10 @@
       <div class="tiny" id="wave">คลื่น 1 • ไม่สิ้นสุด</div>
       <div class="tiny" id="tankStats">ปลา 2 ตัว • เมล็ดโบนัส 0</div>
     </div>
-    <button id="pauseBtn" aria-label="หยุดเกม">⏸</button>
+    <div class="topActions">
+      <button id="settingsBtn" type="button" aria-label="ตั้งค่าเสียง">⚙️</button>
+      <button id="pauseBtn" type="button" aria-label="หยุดเกม">⏸</button>
+    </div>
   </div>
 
   <div id="eventBanner" class="hidden">
@@ -228,7 +274,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Louder Audio: เพิ่มความดังของเอฟเฟกต์เสียงโดยยังคุมไม่ให้แตก</p>
+      <p>เวอร์ชัน Audio Settings: เอฟเฟกต์ดังขึ้น พร้อมปิด–เปิดเอฟเฟกต์และเพลงพื้นหลังแยกกัน</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -244,6 +290,7 @@
       <button id="startBtn" class="primary">เริ่มเล่น / เล่นต่อ</button>
       <button id="installBtn" class="installBtn">📲 ติดตั้งเกมเป็นแอป</button>
       <small id="installNote" class="installNote">ติดตั้งแล้วจะมีไอคอนบนหน้าจอและเปิดเต็มจอเหมือนแอป</small>
+      <button id="startSettingsBtn" class="secondary">⚙️ ตั้งค่าเสียง</button>
       <button id="newBtn" class="secondary">เริ่มใหม่ทั้งหมด</button>
     </div>
   </div>
@@ -252,7 +299,39 @@
     <div class="card center">
       <h2>หยุดชั่วคราว</h2>
       <button id="resumeBtn" class="primary">เล่นต่อ</button>
+      <button id="pauseSettingsBtn" class="secondary">⚙️ ตั้งค่าเสียง</button>
       <button id="restartPauseBtn" class="secondary">ล้างเซฟและเริ่มใหม่</button>
+    </div>
+  </div>
+
+  <div id="settingsOverlay" class="overlay hidden">
+    <div class="card settingsCard">
+      <div class="settingsHeader">
+        <h2>⚙️ ตั้งค่าเสียง</h2>
+        <button id="closeSettingsBtn" class="settingsClose" type="button" aria-label="ปิดตั้งค่า">✕</button>
+      </div>
+      <p>เปิดหรือปิดเสียงแต่ละประเภทแยกกันได้ การตั้งค่าจะถูกจำไว้ในเครื่องนี้</p>
+
+      <div class="settingRow">
+        <div class="settingIcon">🔊</div>
+        <div class="settingMeta">
+          <b>เอฟเฟกต์เสียง</b>
+          <small>เหรียญ อาหาร ซื้อขาย การรักษา อีเวนต์ และการต่อสู้</small>
+        </div>
+        <button id="sfxToggleBtn" class="audioToggle on" type="button">เปิด</button>
+      </div>
+
+      <div class="settingRow">
+        <div class="settingIcon">🎵</div>
+        <div class="settingMeta">
+          <b>เพลงพื้นหลัง</b>
+          <small>ดนตรีบรรยากาศใต้น้ำแบบเบา ๆ ระหว่างเลี้ยงปลา</small>
+        </div>
+        <button id="musicToggleBtn" class="audioToggle on" type="button">เปิด</button>
+      </div>
+
+      <button id="testSoundBtn" class="audioTestBtn" type="button">🔔 ทดลองเสียงเอฟเฟกต์</button>
+      <div id="audioStatus" class="audioStatus">เอฟเฟกต์เสียง: เปิด • เพลงพื้นหลัง: เปิด</div>
     </div>
   </div>
 
@@ -285,6 +364,7 @@
   "use strict";
 
   const SAVE_KEY = "aqua-pocket-deluxe-v2";
+  const AUDIO_SETTINGS_KEY = "aqua-pocket-audio-settings-v1";
   const FISH_TYPES = {
     goldfish: {
       key:"goldfish", name:"ปลาทอง", emoji:"🐠", price:300, sellBase:100, desc:"ปลาเริ่มต้น เลี้ยงง่าย เลือด 100",
@@ -381,8 +461,11 @@
   const TARGET_FPS = MOBILE_MODE ? 30 : 45;
   const FRAME_MS = 1000 / TARGET_FPS;
   let W=0,H=0,DPR=1, tankTop=90, tankBottom=0, last=0, lastDraw=0, running=false, paused=false;
-  let audioCtx=null,audioMaster=null,audioCompressor=null,audioNoiseBuffer=null,drawTimer=0;
+  let audioCtx=null,audioMaster=null,audioCompressor=null,audioSfxGain=null,audioMusicGain=null;
+  let audioNoiseBuffer=null,musicTimer=null,musicPhrase=0,drawTimer=0;
+  let settingsResumeOnClose=false;
   const soundCooldowns={};
+  const audioSettings=loadAudioSettings();
 
   const state = {
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
@@ -445,6 +528,7 @@
       last=performance.now();
       lastDraw=last;
     }
+    syncBackgroundMusic();
   },{passive:true});
 
   function buildDecor(){
@@ -515,6 +599,65 @@
     }
   }
 
+  function loadAudioSettings(){
+    try{
+      const saved=JSON.parse(localStorage.getItem(AUDIO_SETTINGS_KEY)||"null");
+      return {
+        sfxEnabled:saved?.sfxEnabled!==false,
+        musicEnabled:saved?.musicEnabled!==false
+      };
+    }catch(e){
+      return {sfxEnabled:true,musicEnabled:true};
+    }
+  }
+
+  function saveAudioSettings(){
+    try{
+      localStorage.setItem(AUDIO_SETTINGS_KEY,JSON.stringify(audioSettings));
+    }catch(e){}
+  }
+
+  function updateAudioSettingsUI(){
+    const sfxBtn=$("sfxToggleBtn");
+    const musicBtn=$("musicToggleBtn");
+    const status=$("audioStatus");
+
+    if(sfxBtn){
+      sfxBtn.textContent=audioSettings.sfxEnabled?"เปิด":"ปิด";
+      sfxBtn.classList.toggle("on",audioSettings.sfxEnabled);
+      sfxBtn.setAttribute("aria-pressed",String(audioSettings.sfxEnabled));
+    }
+    if(musicBtn){
+      musicBtn.textContent=audioSettings.musicEnabled?"เปิด":"ปิด";
+      musicBtn.classList.toggle("on",audioSettings.musicEnabled);
+      musicBtn.setAttribute("aria-pressed",String(audioSettings.musicEnabled));
+    }
+    if(status){
+      status.textContent=`เอฟเฟกต์เสียง: ${audioSettings.sfxEnabled?"เปิด":"ปิด"} • เพลงพื้นหลัง: ${audioSettings.musicEnabled?"เปิด":"ปิด"}`;
+    }
+  }
+
+  function openAudioSettings(){
+    settingsResumeOnClose=running&&!paused;
+    if(settingsResumeOnClose){
+      paused=true;
+      syncBackgroundMusic();
+    }
+    updateAudioSettingsUI();
+    $("settingsOverlay").classList.remove("hidden");
+  }
+
+  function closeAudioSettings(){
+    $("settingsOverlay").classList.add("hidden");
+    if(settingsResumeOnClose){
+      paused=false;
+      last=performance.now();
+      lastDraw=last;
+    }
+    settingsResumeOnClose=false;
+    syncBackgroundMusic();
+  }
+
   function ensureAudio(){
     if(!audioCtx){
       const AudioClass=window.AudioContext||window.webkitAudioContext;
@@ -522,14 +665,22 @@
       audioCtx=new AudioClass();
 
       audioCompressor=audioCtx.createDynamicsCompressor();
-      audioCompressor.threshold.value=-18;
-      audioCompressor.knee.value=18;
-      audioCompressor.ratio.value=5;
-      audioCompressor.attack.value=.004;
-      audioCompressor.release.value=.18;
+      audioCompressor.threshold.value=-16;
+      audioCompressor.knee.value=16;
+      audioCompressor.ratio.value=6;
+      audioCompressor.attack.value=.003;
+      audioCompressor.release.value=.16;
 
+      audioSfxGain=audioCtx.createGain();
+      audioMusicGain=audioCtx.createGain();
       audioMaster=audioCtx.createGain();
-      audioMaster.gain.value=.95;
+
+      audioSfxGain.gain.value=audioSettings.sfxEnabled?1:.0001;
+      audioMusicGain.gain.value=.0001;
+      audioMaster.gain.value=1.12;
+
+      audioSfxGain.connect(audioCompressor);
+      audioMusicGain.connect(audioCompressor);
       audioCompressor.connect(audioMaster);
       audioMaster.connect(audioCtx.destination);
 
@@ -543,11 +694,11 @@
   }
 
   function audioOutput(){
-    return audioCompressor||audioCtx?.destination;
+    return audioSfxGain||audioCompressor||audioCtx?.destination;
   }
 
   function playTone(freq=440,dur=.08,type="sine",gain=.025,delay=0,endFreq=freq,pan=0){
-    if(!ensureAudio()) return;
+    if(!audioSettings.sfxEnabled||!ensureAudio()) return;
     const now=audioCtx.currentTime+Math.max(0,delay);
     const stop=now+Math.max(.025,dur);
     const osc=audioCtx.createOscillator();
@@ -560,7 +711,7 @@
     }
 
     amp.gain.setValueAtTime(.0001,now);
-    amp.gain.exponentialRampToValueAtTime(Math.max(.0002,gain*1.12),now+Math.min(.018,dur*.25));
+    amp.gain.exponentialRampToValueAtTime(Math.max(.0002,gain*1.28),now+Math.min(.018,dur*.25));
     amp.gain.exponentialRampToValueAtTime(.0001,stop);
 
     osc.connect(amp);
@@ -578,7 +729,7 @@
   }
 
   function playNoise(dur=.08,gain=.012,frequency=900,type="bandpass",delay=0,pan=0){
-    if(!ensureAudio()||!audioNoiseBuffer) return;
+    if(!audioSettings.sfxEnabled||!ensureAudio()||!audioNoiseBuffer) return;
     const now=audioCtx.currentTime+Math.max(0,delay);
     const stop=now+Math.max(.025,dur);
     const source=audioCtx.createBufferSource();
@@ -590,7 +741,7 @@
     filter.frequency.setValueAtTime(Math.max(80,frequency),now);
     filter.Q.value=type==="bandpass"?1.1:.5;
 
-    amp.gain.setValueAtTime(Math.max(.0002,gain*1.08),now);
+    amp.gain.setValueAtTime(Math.max(.0002,gain*1.18),now);
     amp.gain.exponentialRampToValueAtTime(.0001,stop);
 
     source.connect(filter);
@@ -608,6 +759,115 @@
     source.stop(stop+.02);
   }
 
+  function playMusicTone(freq=220,dur=3,gain=.018,delay=0,pan=0){
+    if(!audioSettings.musicEnabled||!ensureAudio()||!audioMusicGain) return;
+
+    const now=audioCtx.currentTime+Math.max(0,delay);
+    const stop=now+Math.max(.25,dur);
+    const osc=audioCtx.createOscillator();
+    const shimmer=audioCtx.createOscillator();
+    const filter=audioCtx.createBiquadFilter();
+    const amp=audioCtx.createGain();
+
+    osc.type="sine";
+    shimmer.type="triangle";
+    osc.frequency.setValueAtTime(freq,now);
+    shimmer.frequency.setValueAtTime(freq*2.002,now);
+
+    filter.type="lowpass";
+    filter.frequency.setValueAtTime(1250,now);
+    filter.Q.value=.45;
+
+    amp.gain.setValueAtTime(.0001,now);
+    amp.gain.linearRampToValueAtTime(gain,now+Math.min(.7,dur*.28));
+    amp.gain.setValueAtTime(gain,Math.max(now+.1,stop-.9));
+    amp.gain.exponentialRampToValueAtTime(.0001,stop);
+
+    const shimmerGain=audioCtx.createGain();
+    shimmerGain.gain.value=.13;
+
+    osc.connect(filter);
+    shimmer.connect(shimmerGain);
+    shimmerGain.connect(filter);
+    filter.connect(amp);
+
+    if(audioCtx.createStereoPanner){
+      const panner=audioCtx.createStereoPanner();
+      panner.pan.value=Math.max(-1,Math.min(1,pan));
+      amp.connect(panner);
+      panner.connect(audioMusicGain);
+    }else{
+      amp.connect(audioMusicGain);
+    }
+
+    osc.start(now);
+    shimmer.start(now);
+    osc.stop(stop+.05);
+    shimmer.stop(stop+.05);
+  }
+
+  function playBackgroundPhrase(){
+    if(!audioSettings.musicEnabled||paused||!running||document.hidden) return;
+
+    const progressions=[
+      [196,246.94,293.66],
+      [174.61,220,261.63],
+      [146.83,196,246.94],
+      [164.81,207.65,261.63]
+    ];
+    const chord=progressions[musicPhrase%progressions.length];
+    musicPhrase++;
+
+    playMusicTone(chord[0],4.8,.020,0,-.28);
+    playMusicTone(chord[1],4.5,.014,.16,.20);
+    playMusicTone(chord[2],4.1,.010,.38,.38);
+
+    const sparkle=chord[2]*2;
+    playMusicTone(sparkle,1.35,.0055,.85,-.10);
+    playMusicTone(sparkle*1.125,1.1,.0045,2.45,.18);
+  }
+
+  function syncBackgroundMusic(){
+    if(!audioCtx||!audioMusicGain) return;
+
+    const shouldPlay=audioSettings.musicEnabled&&running&&!paused&&!document.hidden;
+    const now=audioCtx.currentTime;
+    audioMusicGain.gain.cancelScheduledValues(now);
+    audioMusicGain.gain.setValueAtTime(Math.max(.0001,audioMusicGain.gain.value),now);
+    audioMusicGain.gain.linearRampToValueAtTime(shouldPlay?.24:.0001,now+.32);
+
+    if(shouldPlay&&!musicTimer){
+      playBackgroundPhrase();
+      musicTimer=setInterval(playBackgroundPhrase,4800);
+    }else if(!shouldPlay&&musicTimer){
+      clearInterval(musicTimer);
+      musicTimer=null;
+    }
+  }
+
+  function setSfxEnabled(enabled){
+    audioSettings.sfxEnabled=!!enabled;
+    saveAudioSettings();
+    ensureAudio();
+
+    if(audioSfxGain){
+      const now=audioCtx.currentTime;
+      audioSfxGain.gain.cancelScheduledValues(now);
+      audioSfxGain.gain.linearRampToValueAtTime(audioSettings.sfxEnabled?1:.0001,now+.08);
+    }
+
+    updateAudioSettingsUI();
+    if(audioSettings.sfxEnabled) setTimeout(()=>sfx("save"),90);
+  }
+
+  function setMusicEnabled(enabled){
+    audioSettings.musicEnabled=!!enabled;
+    saveAudioSettings();
+    ensureAudio();
+    updateAudioSettingsUI();
+    syncBackgroundMusic();
+  }
+
   function soundReady(name,gapMs=0){
     const now=performance.now();
     if(gapMs&&now-(soundCooldowns[name]||0)<gapMs) return false;
@@ -616,7 +876,7 @@
   }
 
   function sfx(name,value=0){
-    if(!ensureAudio()) return;
+    if(!audioSettings.sfxEnabled||!ensureAudio()) return;
 
     if(name==="feed"){
       if(!soundReady(name,45)) return;
@@ -817,12 +1077,12 @@
     state.soldCount=0;state.salesCoins=0;
     state.selectedType="goldfish";
     if(loadSaved && loadProgress()){
-      running=true; paused=false; updateUI(); renderSpeciesStrip(); return;
+      running=true; paused=false; updateUI(); renderSpeciesStrip(); syncBackgroundMusic(); return;
     }
     spawnFish(W*.38,H*.45,"goldfish");
     spawnFish(W*.62,H*.48,"clownfish");
     running=true; paused=false;
-    updateUI(); renderSpeciesStrip(); saveProgress();
+    updateUI(); renderSpeciesStrip(); saveProgress(); syncBackgroundMusic();
   }
 
   function saveProgress(){
@@ -3334,6 +3594,23 @@
   $("saveBtn").onclick=()=>{ saveProgress(); toast("บันทึกความคืบหน้าแล้ว"); sfx("save"); };
   $("rescueBtn").onclick=()=> rescueTank(false);
 
+  $("settingsBtn").onclick=openAudioSettings;
+  $("startSettingsBtn").onclick=openAudioSettings;
+  $("pauseSettingsBtn").onclick=openAudioSettings;
+  $("closeSettingsBtn").onclick=closeAudioSettings;
+  $("sfxToggleBtn").onclick=()=>setSfxEnabled(!audioSettings.sfxEnabled);
+  $("musicToggleBtn").onclick=()=>setMusicEnabled(!audioSettings.musicEnabled);
+  $("testSoundBtn").onclick=()=>{
+    if(!audioSettings.sfxEnabled){
+      toast("เปิดเอฟเฟกต์เสียงก่อน");
+      return;
+    }
+    sfx("upgrade");
+  };
+  $("settingsOverlay").addEventListener("pointerdown",event=>{
+    if(event.target===$("settingsOverlay")) closeAudioSettings();
+  });
+
   $("startBtn").onclick=()=>{
     ensureAudio();
     ui.startOverlay.classList.add("hidden");
@@ -3345,8 +3622,20 @@
     ui.startOverlay.classList.add("hidden");
     reset(false);
   };
-  $("pauseBtn").onclick=()=>{ if(!running) return; paused=true; ui.pauseOverlay.classList.remove("hidden"); saveProgress(); };
-  $("resumeBtn").onclick=()=>{ paused=false; last=performance.now(); ui.pauseOverlay.classList.add("hidden"); };
+  $("pauseBtn").onclick=()=>{
+    if(!running) return;
+    paused=true;
+    ui.pauseOverlay.classList.remove("hidden");
+    saveProgress();
+    syncBackgroundMusic();
+  };
+  $("resumeBtn").onclick=()=>{
+    paused=false;
+    last=performance.now();
+    lastDraw=last;
+    ui.pauseOverlay.classList.add("hidden");
+    syncBackgroundMusic();
+  };
   $("restartPauseBtn").onclick=()=>{ localStorage.removeItem(SAVE_KEY); ui.pauseOverlay.classList.add("hidden"); reset(false); };
 
   // ติดตั้งเป็น Progressive Web App (PWA)
@@ -3416,7 +3705,7 @@
   setInterval(()=>{ if(running&&!paused) saveProgress(); },5000);
   addEventListener("pagehide", saveProgress);
 
-  fit(); updateUI(); updateEventUI(true); renderSpeciesStrip(); requestAnimationFrame(loop);
+  fit(); updateUI(); updateAudioSettingsUI(); updateEventUI(true); renderSpeciesStrip(); requestAnimationFrame(loop);
 })();
 </script>
 </body>
