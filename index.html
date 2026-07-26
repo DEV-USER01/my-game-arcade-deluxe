@@ -835,12 +835,14 @@
     }
     updateAudioSettingsUI();
     $("settingsOverlay").classList.remove("hidden");
+    updateEventScheduleUI(true);
     ensureAudio();
     syncBackgroundMusic();
   }
 
   function closeAudioSettings(){
     $("settingsOverlay").classList.add("hidden");
+    updateEventScheduleUI(true);
     if(settingsResumeOnClose){
       paused=false;
       last=performance.now();
@@ -1405,7 +1407,8 @@
     ui.bossScheduleTime.textContent=bossText;
     ui.bossEventSchedule.classList.toggle("due",bossDue);
 
-    ui.eventScheduleBar.classList.toggle("hidden",!!state.activeEvent||!!state.eelRaid);
+    const overlayOpen = !ui.shopOverlay.classList.contains("hidden") || !$("settingsOverlay").classList.contains("hidden") || !ui.pauseOverlay.classList.contains("hidden") || !ui.startOverlay.classList.contains("hidden");
+    ui.eventScheduleBar.classList.toggle("hidden", !!state.activeEvent || !!state.eelRaid || overlayOpen);
   }
 
   function scheduleNextEelRaid(first=false){
@@ -4217,9 +4220,9 @@
 
   canvas.addEventListener("pointerdown",act,{passive:false});
   $("feedHintBtn").onclick=()=>toast("แตะในตู้ปลาเพื่อให้อาหาร");
-  $("shopBtn").onclick=()=>{ renderShop(); ui.shopOverlay.classList.remove("hidden"); };
+  $("shopBtn").onclick=()=>{ renderShop(); ui.shopOverlay.classList.remove("hidden"); updateEventScheduleUI(true); };
   $("healBtn").onclick=()=>healAllFish();
-  $("closeShopBtn").onclick=()=> ui.shopOverlay.classList.add("hidden");
+  $("closeShopBtn").onclick=()=>{ ui.shopOverlay.classList.add("hidden"); updateEventScheduleUI(true); };
   $("saveBtn").onclick=()=>{ saveProgress(); toast("บันทึกความคืบหน้าแล้ว"); sfx("save"); };
   $("rescueBtn").onclick=()=> rescueTank(false);
 
