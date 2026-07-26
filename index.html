@@ -195,7 +195,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชันปลาใหม่: เพิ่มสายพันธุ์ปลาใหม่หลายแบบ พร้อมเลือดและราคาที่ต่างกันตามความหายาก</p>
+      <p>เวอร์ชัน Guardian Limit: ปรับราคาองครักษ์ให้สูงขึ้น และจำกัดแต่ละสายพันธุ์สูงสุด 3 ตัว</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -302,26 +302,27 @@
   const GUARDIAN_TYPES = {
     sword: {
       key:"sword", name:"ปลาหางดาบองครักษ์", emoji:"🐟", body:"sword",
-      price:750, damage:3.6, cooldown:.88, speed:1.10, range:205,
+      price:2500, damage:3.6, cooldown:.88, speed:1.10, range:205,
       color:"#48c8ee", desc:"รุ่นเริ่มต้น คล่องตัวและยิงต่อเนื่อง"
     },
     pufferGuard: {
       key:"pufferGuard", name:"ปักเป้าป้อมปืน", emoji:"🐡", body:"puffer",
-      price:1800, damage:5.8, cooldown:1.02, speed:.84, range:230,
+      price:7500, damage:5.8, cooldown:1.02, speed:.84, range:230,
       color:"#ffd76a", desc:"เคลื่อนที่ช้า แต่กระสุนหนักและยิงไกล"
     },
     ray: {
       key:"ray", name:"กระเบนสายฟ้า", emoji:"⚡", body:"ray",
-      price:4500, damage:8.6, cooldown:.70, speed:1.18, range:255,
+      price:20000, damage:8.6, cooldown:.70, speed:1.18, range:255,
       color:"#a88cff", desc:"รวดเร็ว ยิงสายฟ้าแรงและถี่"
     },
     royalShark: {
       key:"royalShark", name:"ฉลามราชองครักษ์", emoji:"🦈", body:"royalShark",
-      price:10000, damage:13.5, cooldown:.58, speed:1.26, range:285,
+      price:50000, damage:13.5, cooldown:.58, speed:1.26, range:285,
       color:"#7ee8ff", desc:"รุ่นสูงสุด ยิงแรงที่สุดและไล่ล่าเร็ว"
     }
   };
-  const MAX_GUARDIANS = 6;
+  const MAX_GUARDIANS_PER_TYPE = 3;
+  const MAX_GUARDIANS = Object.keys(GUARDIAN_TYPES).length * MAX_GUARDIANS_PER_TYPE;
 
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d",{alpha:false,desynchronized:true}) || canvas.getContext("2d");
@@ -534,9 +535,19 @@
         f.size = Math.min(1.85, f.baseSize + f.growth/140);
         f.hueShift = Number(saved.hueShift)||0;
       });
-      const savedGuardianTypes=Array.isArray(data.guardianTypes)
-        ? data.guardianTypes.slice(0,MAX_GUARDIANS)
-        : Array(Math.min(3,Math.max(0,Number(data.guardianCount)||0))).fill("sword");
+      const rawGuardianTypes=Array.isArray(data.guardianTypes)
+        ? data.guardianTypes
+        : Array(Math.min(MAX_GUARDIANS_PER_TYPE,Math.max(0,Number(data.guardianCount)||0))).fill("sword");
+      const typeCounts={};
+      const savedGuardianTypes=[];
+      rawGuardianTypes.forEach(typeKey=>{
+        const safeType=GUARDIAN_TYPES[typeKey]?typeKey:"sword";
+        typeCounts[safeType]=(typeCounts[safeType]||0);
+        if(typeCounts[safeType]<MAX_GUARDIANS_PER_TYPE && savedGuardianTypes.length<MAX_GUARDIANS){
+          typeCounts[safeType]++;
+          savedGuardianTypes.push(safeType);
+        }
+      });
       savedGuardianTypes.forEach((typeKey,i)=>{
         spawnGuardian(W*.32+(i%3)*74,tankTop+88+Math.floor(i/3)*62,typeKey);
       });
@@ -558,9 +569,14 @@
     });
   }
 
+  function guardianCountByType(typeKey){
+    return state.guardians.filter(g=>g.typeKey===typeKey).length;
+  }
+
   function spawnGuardian(x=W*.5,y=tankTop+110,typeKey="sword"){
-    if(state.guardians.length>=MAX_GUARDIANS) return false;
     const type=GUARDIAN_TYPES[typeKey]||GUARDIAN_TYPES.sword;
+    if(state.guardians.length>=MAX_GUARDIANS) return false;
+    if(guardianCountByType(type.key)>=MAX_GUARDIANS_PER_TYPE) return false;
     const side=Math.random()<.5?-1:1;
     state.guardians.push({
       typeKey:type.key,typeData:type,
@@ -743,8 +759,13 @@
   function buyGuardian(typeKey){
     const type=GUARDIAN_TYPES[typeKey];
     if(!type) return;
+    const owned=guardianCountByType(type.key);
+    if(owned>=MAX_GUARDIANS_PER_TYPE){
+      toast(`${type.name} มีครบ ${MAX_GUARDIANS_PER_TYPE} ตัวแล้ว`);
+      return;
+    }
     if(state.guardians.length>=MAX_GUARDIANS){
-      toast(`มีปลาองครักษ์ครบ ${MAX_GUARDIANS} ตัวแล้ว`);
+      toast(`มีปลาองครักษ์รวมครบ ${MAX_GUARDIANS} ตัวแล้ว`);
       return;
     }
     if(state.coins<type.price){
@@ -794,7 +815,7 @@
     ui.coins.textContent=Math.floor(state.coins);
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
     ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`;
-    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
+    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
   }
 
   function nearest(arr,x,y,max=1e9){
@@ -836,13 +857,16 @@
     });
 
     ui.upgradeShop.innerHTML="";
-    const guardianUpgrades=Object.values(GUARDIAN_TYPES).map(type=>({
-      emoji:type.emoji,
-      name:type.name,
-      desc:`${type.desc} • พลัง ${type.damage.toFixed(1)} • ระยะ ${type.range} • มี ${state.guardians.filter(g=>g.typeKey===type.key).length} ตัว`,
-      price:state.guardians.length>=MAX_GUARDIANS?null:type.price,
-      action:()=>buyGuardian(type.key)
-    }));
+    const guardianUpgrades=Object.values(GUARDIAN_TYPES).map(type=>{
+      const owned=guardianCountByType(type.key);
+      return {
+        emoji:type.emoji,
+        name:type.name,
+        desc:`${type.desc} • พลัง ${type.damage.toFixed(1)} • ระยะ ${type.range} • มี ${owned}/${MAX_GUARDIANS_PER_TYPE} ตัว`,
+        price:owned>=MAX_GUARDIANS_PER_TYPE?null:type.price,
+        action:()=>buyGuardian(type.key)
+      };
+    });
     const upgrades = [
       {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • ปลาโตไวขึ้น`, price:state.foodLevel>=5?null:40+(state.foodLevel-1)*35, action:()=>buy("food")},
       {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:120, action:()=>buy("snail")},
