@@ -68,6 +68,45 @@
       box-shadow:0 5px 18px rgba(0,0,0,.22)
     }
     #settingsBtn{font-size:18px}
+    #eventScheduleBar{
+      position:absolute;z-index:30;left:10px;right:10px;
+      top:calc(var(--safe-top) + 96px);
+      display:grid;grid-template-columns:1fr 1fr;gap:6px;
+      pointer-events:none
+    }
+    .eventScheduleItem{
+      min-width:0;display:flex;align-items:center;gap:6px;
+      padding:6px 9px;border-radius:13px;
+      border:1px solid rgba(132,226,255,.24);
+      background:rgba(4,30,50,.80);backdrop-filter:blur(7px);
+      box-shadow:0 5px 16px rgba(0,0,0,.20);
+      line-height:1.05
+    }
+    .eventScheduleItem.boss{
+      border-color:rgba(255,116,132,.32);
+      background:rgba(62,12,29,.82)
+    }
+    .scheduleIcon{font-size:17px;flex:0 0 auto}
+    .scheduleText{min-width:0;flex:1}
+    .scheduleText small{
+      display:block;font-size:8px;font-weight:750;color:var(--muted);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .scheduleText b{
+      display:block;font-size:10px;font-weight:950;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .scheduleTime{
+      flex:0 0 auto;font-size:10px;font-weight:1000;white-space:nowrap;
+      padding:4px 6px;border-radius:9px;background:rgba(0,0,0,.25)
+    }
+    .eventScheduleItem.due{
+      animation:scheduleDuePulse .8s ease-in-out infinite alternate
+    }
+    @keyframes scheduleDuePulse{
+      from{filter:brightness(.9)}
+      to{filter:brightness(1.25)}
+    }
     .home{
       position:absolute;z-index:20;left:10px;top:calc(var(--safe-top) + 52px);width:42px;height:42px;
       display:grid;place-items:center;text-decoration:none;color:inherit;background:var(--panel);
@@ -301,6 +340,12 @@
       .compactStats{padding:5px 8px}
       .compactStats .tiny{font-size:9px}
       .statsMain,#goal,.statsMain b{font-size:10.5px}
+      #eventScheduleBar{left:8px;right:8px;gap:4px;top:calc(var(--safe-top) + 94px)}
+      .eventScheduleItem{padding:5px 7px;gap:4px}
+      .scheduleIcon{font-size:15px}
+      .scheduleText small{font-size:7.5px}
+      .scheduleText b,.scheduleTime{font-size:9px}
+      .scheduleTime{padding:4px 5px}
     }
   </style>
 </head>
@@ -318,6 +363,25 @@
     <div class="topActions">
       <button id="settingsBtn" type="button" aria-label="ตั้งค่าเสียง">⚙️</button>
       <button id="pauseBtn" type="button" aria-label="หยุดเกม">⏸</button>
+    </div>
+  </div>
+
+  <div id="eventScheduleBar">
+    <div id="normalEventSchedule" class="eventScheduleItem">
+      <span id="normalScheduleIcon" class="scheduleIcon">✨</span>
+      <div class="scheduleText">
+        <small>อีเวนต์บัฟถัดไป</small>
+        <b id="normalScheduleName">กำลังสุ่ม...</b>
+      </div>
+      <span id="normalScheduleTime" class="scheduleTime">--:--</span>
+    </div>
+    <div id="bossEventSchedule" class="eventScheduleItem boss">
+      <span class="scheduleIcon">⚡</span>
+      <div class="scheduleText">
+        <small>ลาสบอสถัดไป</small>
+        <b>ฝูงปลาไหลไฟฟ้า</b>
+      </div>
+      <span id="bossScheduleTime" class="scheduleTime">--:--</span>
     </div>
   </div>
 
@@ -357,7 +421,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Clean Aquarium: นำแถบเลือกชนิดปลาออก และขยายพื้นที่ตู้ปลา</p>
+      <p>เวอร์ชัน Event Schedule: แสดงชนิดอีเวนต์ถัดไปและเวลานับถอยหลังใต้แถบด้านบน</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -552,6 +616,13 @@
     bossWarning:$("bossWarning"),bossWarningIcon:$("bossWarningIcon"),
     bossWarningName:$("bossWarningName"),bossWarningDesc:$("bossWarningDesc"),
     bossWarningTime:$("bossWarningTime"),bossWarningBar:$("bossWarningBar"),
+    eventScheduleBar:$("eventScheduleBar"),
+    normalEventSchedule:$("normalEventSchedule"),
+    normalScheduleIcon:$("normalScheduleIcon"),
+    normalScheduleName:$("normalScheduleName"),
+    normalScheduleTime:$("normalScheduleTime"),
+    bossEventSchedule:$("bossEventSchedule"),
+    bossScheduleTime:$("bossScheduleTime"),
     shopOverlay:$("shopOverlay"), startOverlay:$("startOverlay"), pauseOverlay:$("pauseOverlay")
   };
 
@@ -569,8 +640,8 @@
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[],
     electricEels:[],shockFx:[],bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
     snail:null, catfishHelper:null, elapsed:0, nextEnemy:50, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
-    activeEvent:null,nextEventAt:20,lastEventKey:null,eventUiSecond:-1,
-    eelRaid:null,nextEelRaidAt:110,eelRaidUiSecond:-1,
+    activeEvent:null,nextEventAt:20,nextEventKey:null,lastEventKey:null,eventUiSecond:-1,
+    eelRaid:null,nextEelRaidAt:110,eelRaidUiSecond:-1,scheduleUiSecond:-1,
     soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
   };
@@ -1269,9 +1340,78 @@
     return fishPermanentBuffKeys(f).map(key=>EVENT_TYPES[key].fishBuff).join(", ");
   }
 
+  function formatEventCountdown(seconds){
+    const safe=Math.max(0,Math.ceil(Number(seconds)||0));
+    const minutes=Math.floor(safe/60);
+    const secs=safe%60;
+    return `${minutes}:${String(secs).padStart(2,"0")}`;
+  }
+
+  function pickNextEventKey(){
+    const keys=Object.keys(EVENT_TYPES).filter(key=>key!==state.lastEventKey);
+    return keys[Math.floor(Math.random()*keys.length)]||"rainbow";
+  }
+
+  function updateEventScheduleUI(force=false){
+    if(!ui.eventScheduleBar) return;
+
+    const currentSecond=Math.floor(state.elapsed);
+    if(!force&&currentSecond===state.scheduleUiSecond) return;
+    state.scheduleUiSecond=currentSecond;
+
+    let normalType=null;
+    let normalText="";
+    let normalDue=false;
+
+    if(state.activeEvent){
+      normalType=state.activeEvent.type;
+      normalText=`ทำงาน ${formatEventCountdown(state.activeEvent.endsAt-state.elapsed)}`;
+    }else{
+      if(!state.nextEventKey) state.nextEventKey=pickNextEventKey();
+      normalType=EVENT_TYPES[state.nextEventKey]||EVENT_TYPES.rainbow;
+      const remaining=state.nextEventAt-state.elapsed;
+      if(remaining<=0){
+        normalText=state.eelRaid?"รอคิว":"กำลังมา";
+        normalDue=true;
+      }else{
+        normalText=formatEventCountdown(remaining);
+      }
+    }
+
+    ui.normalScheduleIcon.textContent=normalType.icon;
+    ui.normalScheduleName.textContent=normalType.name.replace("อีเวนต์","");
+    ui.normalScheduleTime.textContent=normalText;
+    ui.normalEventSchedule.classList.toggle("due",normalDue);
+
+    let bossText="";
+    let bossDue=false;
+    if(state.eelRaid){
+      if(state.eelRaid.phase==="warning"){
+        bossText=`เตือน ${formatEventCountdown(state.eelRaid.startsAt-state.elapsed)}`;
+      }else{
+        bossText=`กำลังบุก ${formatEventCountdown(state.eelRaid.endsAt-state.elapsed)}`;
+      }
+    }else{
+      const remaining=state.nextEelRaidAt-state.elapsed;
+      if(remaining<=0){
+        bossText=(state.activeEvent||state.enemies.length>0)?"รอคิว":"กำลังมา";
+        bossDue=true;
+      }else{
+        bossText=formatEventCountdown(remaining);
+      }
+    }
+
+    ui.bossScheduleTime.textContent=bossText;
+    ui.bossEventSchedule.classList.toggle("due",bossDue);
+
+    ui.eventScheduleBar.classList.toggle("hidden",!!state.activeEvent||!!state.eelRaid);
+  }
+
   function scheduleNextEelRaid(first=false){
     state.nextEelRaidAt=state.elapsed+(first?75+Math.random()*35:210+Math.random()*90);
     state.eelRaidUiSecond=-1;
+    state.scheduleUiSecond=-1;
+    updateEventScheduleUI(true);
   }
 
   function updateEelRaidUI(force=false){
@@ -1299,7 +1439,9 @@
       shockedCount:0,scarredCount:0,checkedFish:new Set()
     };
     state.eelRaidUiSecond=-1;
+    state.scheduleUiSecond=-1;
     updateEelRaidUI(true);
+    updateEventScheduleUI(true);
     toast("🚨 ระวัง! ฝูงปลาไหลไฟฟ้ากำลังมา");
     sfx("siren");
   }
@@ -1328,7 +1470,8 @@
     const raid=state.eelRaid;if(!raid)return;
     raid.phase="active";raid.startedAt=state.elapsed;raid.endsAt=state.elapsed+8;
     state.eelRaidUiSecond=-1;
-    spawnElectricEelSchool();updateEelRaidUI(true);
+    state.scheduleUiSecond=-1;
+    spawnElectricEelSchool();updateEelRaidUI(true);updateEventScheduleUI(true);
     toast("⚡ ฝูงปลาไหลไฟฟ้าพุ่งเข้ามาแล้ว!");sfx("eelRush");
   }
 
@@ -1352,7 +1495,8 @@
     const raid=state.eelRaid;if(!raid)return;
     const shocked=raid.shockedCount,scarred=raid.scarredCount;
     state.electricEels.length=0;state.eelRaid=null;state.eelRaidUiSecond=-1;
-    updateEelRaidUI(true);scheduleNextEelRaid(false);
+    state.scheduleUiSecond=-1;
+    updateEelRaidUI(true);scheduleNextEelRaid(false);updateEventScheduleUI(true);
     toast(`⚡ ฝูงปลาไหลผ่านไปแล้ว\nช็อต ${shocked} ครั้ง • ติดตราไฟฟ้า ${scarred} ตัว`);
     sfx("eventEnd");updateUI();saveProgress();
   }
@@ -1390,7 +1534,13 @@
   }
 
   function currentEventEffects(){return state.activeEvent?state.activeEvent.type:NO_EVENT_EFFECTS;}
-  function scheduleNextEvent(first=false){state.nextEventAt=state.elapsed+(first?18+Math.random()*10:70+Math.random()*45);state.eventUiSecond=-1;}
+  function scheduleNextEvent(first=false){
+    state.nextEventAt=state.elapsed+(first?18+Math.random()*10:70+Math.random()*45);
+    state.nextEventKey=pickNextEventKey();
+    state.eventUiSecond=-1;
+    state.scheduleUiSecond=-1;
+    updateEventScheduleUI(true);
+  }
   function updateEventUI(force=false){
     if(!ui.eventBanner)return;
     const a=state.activeEvent;
@@ -1402,9 +1552,14 @@
     ui.eventBar.style.width=`${Math.max(0,Math.min(100,remaining/a.type.duration*100))}%`;
   }
   function startRandomEvent(){
-    const pool=Object.values(EVENT_TYPES).filter(e=>e.key!==state.lastEventKey);
-    const type=pool[Math.floor(Math.random()*pool.length)]||EVENT_TYPES.rainbow;
-    state.activeEvent={key:type.key,type,startedAt:state.elapsed,endsAt:state.elapsed+type.duration};state.lastEventKey=type.key;state.eventUiSecond=-1;
+    const type=EVENT_TYPES[state.nextEventKey]
+      ||EVENT_TYPES[pickNextEventKey()]
+      ||EVENT_TYPES.rainbow;
+    state.nextEventKey=null;
+    state.activeEvent={key:type.key,type,startedAt:state.elapsed,endsAt:state.elapsed+type.duration};
+    state.lastEventKey=type.key;
+    state.eventUiSecond=-1;
+    state.scheduleUiSecond=-1;
     let newlyBuffed=0;
     state.fish.forEach(f=>{
       f.eventBuff=type.key;
@@ -1412,13 +1567,24 @@
       if(addPermanentFishBuff(f,type.key)) newlyBuffed++;
     });
     state.guardians.forEach(g=>{g.eventBuff=type.key;g.eventBuffUntil=state.activeEvent.endsAt;});
-    toast(`${type.icon} ${type.name} เริ่มแล้ว!\nปลา ${newlyBuffed} ตัวได้รับบัฟถาวร: ${type.fishBuff}`);sfx("event",type.key);updateEventUI(true);updateUI();
+    toast(`${type.icon} ${type.name} เริ่มแล้ว!
+ปลา ${newlyBuffed} ตัวได้รับบัฟถาวร: ${type.fishBuff}`);
+    sfx("event",type.key);
+    updateEventUI(true);
+    updateEventScheduleUI(true);
+    updateUI();
   }
   function endActiveEvent(){
     const ended=state.activeEvent;if(!ended)return;
     state.fish.forEach(f=>{f.eventBuff=null;f.eventBuffUntil=0;});
     state.guardians.forEach(g=>{g.eventBuff=null;g.eventBuffUntil=0;});
-    state.activeEvent=null;scheduleNextEvent(false);updateEventUI(true);toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);sfx("eventEnd");updateUI();
+    state.activeEvent=null;
+    scheduleNextEvent(false);
+    updateEventUI(true);
+    updateEventScheduleUI(true);
+    toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);
+    sfx("eventEnd");
+    updateUI();
   }
   function updateEventSystem(){
     if(state.activeEvent){
@@ -1973,6 +2139,7 @@
     state.elapsed+=dt;
     updateEelRaidSystem(dt);
     updateEventSystem();
+    updateEventScheduleUI(false);
     const eventFx=currentEventEffects();
     state.rescueCooldown=Math.max(0,state.rescueCooldown-dt);
 
@@ -4214,7 +4381,8 @@ ${state.activeEvent.type.icon} อีเวนต์: ${state.activeEvent.type.n
   setInterval(()=>{ if(running&&!paused) saveProgress(); },5000);
   addEventListener("pagehide", saveProgress);
 
-  fit(); updateUI(); updateAudioSettingsUI(); updateEventUI(true); renderSpeciesStrip(); requestAnimationFrame(loop);
+  fit(); updateUI(); updateAudioSettingsUI(); updateEventUI(true);
+  updateEventScheduleUI(true); renderSpeciesStrip(); requestAnimationFrame(loop);
 })();
 </script>
 </body>
