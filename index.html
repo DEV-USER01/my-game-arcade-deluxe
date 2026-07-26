@@ -44,6 +44,22 @@
     .stack strong{font-size:14px}
     .grow{display:flex;flex-direction:column;gap:2px}
     .tiny{font-size:12px;font-weight:650;opacity:.9}
+    .compactStats{
+      min-width:0;padding:6px 9px;border-radius:14px;line-height:1.05;
+      overflow:hidden;cursor:pointer
+    }
+    .compactStats:active{transform:translateY(1px)}
+    .statsMain{
+      display:flex;align-items:baseline;gap:5px;min-width:0;
+      font-size:11px;white-space:nowrap
+    }
+    .statsMain b{font-size:11px}
+    #goal{font-size:11px;font-weight:900;white-space:nowrap}
+    .compactStats .tiny{
+      font-size:9.5px;line-height:1.12;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;opacity:.92
+    }
+    #tankStats{opacity:.78}
     button{font:inherit;color:inherit}
     .topActions{display:flex;gap:6px;pointer-events:none}
     #pauseBtn,#settingsBtn{
@@ -291,6 +307,9 @@
       .actionBtn{font-size:10.5px;padding:6px 2px;min-height:58px}
       .actionBtn small{font-size:8.5px}
       .pill{padding:7px 9px;font-size:13px}
+      .compactStats{padding:5px 8px}
+      .compactStats .tiny{font-size:9px}
+      .statsMain,#goal,.statsMain b{font-size:10.5px}
     }
   </style>
 </head>
@@ -300,10 +319,10 @@
 
   <div class="topbar">
     <div class="pill stack"><small>เหรียญ</small><strong>🪙 <span id="coins">30</span></strong></div>
-    <div class="pill grow">
-      <div><b>ระดับตู้</b> <span id="goal">0 • ถัดไป 500</span></div>
-      <div class="tiny" id="wave">คลื่น 1 • ไม่สิ้นสุด</div>
-      <div class="tiny" id="tankStats">ปลา 2 ตัว • เมล็ดโบนัส 0</div>
+    <div id="statsPanel" class="pill grow compactStats" role="button" tabindex="0" aria-label="ดูรายละเอียดตู้ปลา">
+      <div class="statsMain"><b>ตู้</b><span id="goal">0 • ถัดไป 500</span></div>
+      <div class="tiny" id="wave">🌊 คลื่น 1 • ∞</div>
+      <div class="tiny" id="tankStats">🐟 2/4 • 🛡️ 0/12 • ขาย 0 • 🛟 0</div>
     </div>
     <div class="topActions">
       <button id="settingsBtn" type="button" aria-label="ตั้งค่าเสียง">⚙️</button>
@@ -354,7 +373,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Electric Eel Boss: เพิ่มลาสบอสฝูงปลาไหลไฟฟ้า แถบเตือนแดง ไซเรน และตราไฟฟ้าลดราคาขาย</p>
+      <p>เวอร์ชัน Compact Stats: ย่อกล่องข้อมูลด้านบน และแตะเพื่อดูรายละเอียดทั้งหมด</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -1873,12 +1892,16 @@
   function updateUI(){
     ui.coins.textContent=Math.floor(state.coins);
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
-    const eventLabel=state.activeEvent?` • ${state.activeEvent.type.icon} ${state.activeEvent.type.name}`:"";
-    ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด${eventLabel}`;
+    const eventLabel=state.activeEvent?` • ${state.activeEvent.type.icon}`:"";
+    ui.wave.textContent=`🌊 คลื่น ${Math.max(1,state.wave-1)} • ∞${eventLabel}`;
     const helperText=state.catfishHelper
-      ? ` • ปลาดุกคืนเงิน ${state.catfishHelper.refunds||0}`
+      ? ` • ↩️ ${state.catfishHelper.refunds||0}`
       : "";
-    ui.tankStats.textContent=`ปลา ${state.fish.length}/${fishCapacity()} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount}${helperText} • กู้ภัย ${state.rescues} ครั้ง`;
+    ui.tankStats.textContent=
+      `🐟 ${state.fish.length}/${fishCapacity()}`
+      + ` • 🛡️ ${state.guardians.length}/${MAX_GUARDIANS}`
+      + ` • ขาย ${state.soldCount}${helperText}`
+      + ` • 🛟 ${state.rescues}`;
     const healBtn=$("healBtn");
     if(healBtn){
       const cost=healFishCost();
@@ -4099,6 +4122,39 @@
     ui.startOverlay.classList.add("hidden");
     reset(false);
   };
+  const showFullTankStats=()=>{
+    const eventText=state.activeEvent
+      ? `
+${state.activeEvent.type.icon} อีเวนต์: ${state.activeEvent.type.name}`
+      : "";
+    const catfishText=state.catfishHelper
+      ? `
+🐟 ปลาดุกคืนเงินสะสม ${state.catfishHelper.refunds||0} เหรียญ`
+      : "";
+    toast(
+      `ระดับตู้ ${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")} เหรียญ`
+      + `
+🌊 คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`
+      + `
+🐟 ปลา ${state.fish.length}/${fishCapacity()} ตัว`
+      + `
+🛡️ องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} ตัว • สูงสุดชนิดละ 3`
+      + `
+💰 ขายแล้ว ${state.soldCount} ตัว`
+      + catfishText
+      + `
+🛟 กู้ภัย ${state.rescues} ครั้ง`
+      + eventText
+    );
+  };
+  $("statsPanel").onclick=showFullTankStats;
+  $("statsPanel").onkeydown=event=>{
+    if(event.key==="Enter"||event.key===" "){
+      event.preventDefault();
+      showFullTankStats();
+    }
+  };
+
   $("pauseBtn").onclick=()=>{
     if(!running) return;
     paused=true;
