@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#06253d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Aqua Pocket Deluxe</title>
+  <style>
+    :root{
+      --ink:#e8fbff;
+      --muted:#b8def0;
+      --panel:rgba(4,27,47,.84);
+      --line:rgba(133,226,255,.24);
+      --accent:#62e7ff;
+      --gold:#ffd565;
+      --danger:#ff6f91;
+      --safe-bottom:max(12px,env(safe-area-inset-bottom));
+      --safe-top:max(8px,env(safe-area-inset-top));
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;margin:0;overflow:hidden;background:#031725;color:var(--ink);
+      font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;touch-action:none}
+    body{display:grid;place-items:center}
+    #app{position:relative;width:100%;height:100%;max-width:760px;overflow:hidden;background:#062a45}
+    canvas{display:block;width:100%;height:100%}
+    .topbar{
+      position:absolute;left:8px;right:8px;top:var(--safe-top);
+      display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;pointer-events:none
+    }
+    .pill{
+      pointer-events:auto;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px);
+      border-radius:16px;padding:8px 11px;font-weight:800;box-shadow:0 5px 18px rgba(0,0,0,.22)
+    }
+    .stack small{display:block;color:var(--muted);font-size:11px;font-weight:700}
+    .stack strong{font-size:14px}
+    .grow{display:flex;flex-direction:column;gap:2px}
+    .tiny{font-size:12px;font-weight:650;opacity:.9}
+    button{font:inherit;color:inherit}
+    #pauseBtn{width:44px;height:44px;padding:0;border:1px solid var(--line);background:var(--panel);
+      border-radius:15px;font-size:20px;pointer-events:auto}
+    .home{
+      position:absolute;z-index:20;left:10px;top:calc(var(--safe-top) + 52px);width:42px;height:42px;
+      display:grid;place-items:center;text-decoration:none;color:inherit;background:var(--panel);
+      border:1px solid var(--line);border-radius:15px;box-shadow:0 5px 18px rgba(0,0,0,.22)
+    }
+    #bottomBar{
+      position:absolute;left:8px;right:8px;bottom:var(--safe-bottom);display:grid;
+      grid-template-columns:1fr 1fr 1fr 1fr;gap:7px;pointer-events:auto
+    }
+    .actionBtn{
+      min-height:60px;border-radius:17px;border:1px solid var(--line);
+      background:linear-gradient(180deg,rgba(13,75,104,.95),rgba(3,32,53,.95));
+      box-shadow:0 7px 20px rgba(0,0,0,.26);padding:7px 4px;line-height:1.08
+    }
+    .actionBtn.primary{
+      background:linear-gradient(135deg,#66efff,#4a8cff);color:#03253d;border:0;font-weight:950
+    }
+    .actionBtn:active{transform:translateY(2px)}
+    #speciesStrip{
+      position:absolute;left:8px;right:8px;bottom:82px;display:flex;gap:6px;overflow:auto;
+      padding-bottom:4px;pointer-events:auto
+    }
+    .chip{
+      flex:0 0 auto;border:1px solid var(--line);background:rgba(4,27,47,.82);border-radius:999px;
+      padding:6px 10px;font-size:12px;font-weight:800;white-space:nowrap
+    }
+    .chip.selected{outline:2px solid rgba(255,213,101,.8);background:rgba(20,55,80,.95)}
+    .overlay{
+      position:absolute;inset:0;display:grid;place-items:center;padding:20px;
+      background:linear-gradient(rgba(0,16,29,.52),rgba(0,11,20,.82));backdrop-filter:blur(5px)
+    }
+    .card{
+      width:min(620px,100%);max-height:92%;overflow:auto;background:rgba(3,31,51,.95);border:1px solid rgba(116,228,255,.28);
+      border-radius:26px;padding:22px;box-shadow:0 18px 70px rgba(0,0,0,.4)
+    }
+    h1{margin:0 0 8px;font-size:clamp(32px,8vw,54px);letter-spacing:-2px}
+    h2{margin:0 0 10px}
+    p{line-height:1.55;margin:8px 0 16px;color:var(--muted)}
+    .center{text-align:center}
+    .primary{
+      width:100%;min-height:52px;border:0;border-radius:16px;background:linear-gradient(135deg,#4ce1ff,#4a8cff);
+      color:#03253d;font-weight:950;font-size:18px;box-shadow:0 9px 28px rgba(66,190,255,.3)
+    }
+    .secondary{margin-top:10px;width:100%;min-height:48px;border:1px solid var(--line);border-radius:15px;background:#082d49}
+    .tips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 18px}
+    .tip{background:rgba(99,216,255,.08);border:1px solid var(--line);border-radius:14px;padding:10px;font-size:13px}
+    .hidden{display:none!important}
+    #toast{
+      position:absolute;left:50%;top:28%;transform:translate(-50%,-50%);
+      padding:9px 14px;border-radius:999px;background:rgba(0,20,34,.82);border:1px solid var(--line);
+      font-weight:850;pointer-events:none;opacity:0;transition:opacity .18s,transform .18s;white-space:nowrap;z-index:200
+    }
+    #toast.show{opacity:1;transform:translate(-50%,-60%)}
+    .shopGrid{
+      display:grid;grid-template-columns:1fr;gap:10px
+    }
+    .shopItem{
+      display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+      border:1px solid var(--line);border-radius:16px;padding:10px;background:rgba(8,40,63,.78)
+    }
+    .shopEmoji{font-size:30px}
+    .shopMeta b{display:block}
+    .shopMeta small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
+    .buyBtn{
+      min-width:92px;min-height:42px;border:0;border-radius:12px;background:#ffd565;color:#3e2f12;font-weight:950
+    }
+    .buyBtn:disabled{opacity:.45}
+    .sectionTitle{margin:14px 0 8px;font-size:14px;color:#bde8f6;text-transform:uppercase;letter-spacing:.1em}
+    .legend{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .legendItem{border:1px solid var(--line);border-radius:14px;padding:10px;background:rgba(8,40,63,.55);font-size:12px}
+    .legendItem b{display:block;margin-bottom:4px}
+    @media (max-width:520px){
+      .tips,.legend{grid-template-columns:1fr}
+      #bottomBar{gap:5px}
+      .actionBtn{font-size:12px}
+      .pill{padding:7px 9px;font-size:13px}
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <div class="topbar">
+    <div class="pill stack"><small>เหรียญ</small><strong>🪙 <span id="coins">30</span></strong></div>
+    <div class="pill grow">
+      <div><b>ระดับตู้</b> <span id="goal">0 • ถัดไป 500</span></div>
+      <div class="tiny" id="wave">คลื่น 1 • ไม่สิ้นสุด</div>
+      <div class="tiny" id="tankStats">ปลา 2 ตัว • เมล็ดโบนัส 0</div>
+    </div>
+    <button id="pauseBtn" aria-label="หยุดเกม">⏸</button>
+  </div>
+
+  
+
+  <div id="speciesStrip" aria-label="สายพันธุ์ปลา"></div>
+
+  <div id="bottomBar">
+    <button id="feedHintBtn" class="actionBtn primary">🍤 ให้อาหาร<br><small>แตะในตู้</small></button>
+    <button id="shopBtn" class="actionBtn">🛒 ร้านค้า</button>
+    <button id="saveBtn" class="actionBtn">💾 บันทึก</button>
+    <button id="rescueBtn" class="actionBtn">🛟 กู้ตู้ปลา</button>
+  </div>
+
+  <div id="startOverlay" class="overlay">
+    <div class="card center">
+      <div style="font-size:58px">🐠✨</div>
+      <h1>Aqua Pocket Deluxe</h1>
+      <p>เวอร์ชันอัปเกรดเต็มรูปแบบของตู้ปลา: ปลาหลายสายพันธุ์ ดีไซน์สวยขึ้นแบบ 2.5D ศัตรูหลายชนิด อัปตู้ได้เรื่อย ๆ และเล่นต่อเนื่องไม่มีฉากจบ</p>
+      <div class="tips">
+        <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
+        <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
+        <div class="tip">👾 แตะศัตรูเพื่อโจมตี</div>
+        <div class="tip">🦪 อัปเกรดตู้เพื่อรับโบนัสถาวร</div>
+      </div>
+
+      <div class="legend">
+        <div class="legendItem"><b>ปลา 5 สายพันธุ์</b> ปลาทอง ปลาการ์ตูน เทพา พองตัว และฉลามจิ๋ว มีความสามารถไม่เหมือนกัน</div>
+        <div class="legendItem"><b>ศัตรู 3 แบบ</b> ปลาเงา แมงกะพรุนผี และปูกรงเล็บ แต่ละแบบมีความเร็วและพลังต่างกัน</div>
+      </div>
+
+      <button id="startBtn" class="primary">เริ่มเล่น / เล่นต่อ</button>
+      <button id="newBtn" class="secondary">เริ่มใหม่ทั้งหมด</button>
+    </div>
+  </div>
+
+  <div id="pauseOverlay" class="overlay hidden">
+    <div class="card center">
+      <h2>หยุดชั่วคราว</h2>
+      <button id="resumeBtn" class="primary">เล่นต่อ</button>
+      <button id="restartPauseBtn" class="secondary">ล้างเซฟและเริ่มใหม่</button>
+    </div>
+  </div>
+
+  <div id="shopOverlay" class="overlay hidden">
+    <div class="card">
+      <h2>🛒 ร้านค้าตู้ปลา</h2>
+      <p>เพิ่มสายพันธุ์ปลาใหม่ เลือกตัวที่เหมาะกับสไตล์การเล่นของคุณ หรืออัปเกรดระบบตู้เพื่อเอาชีวิตรอดให้นานขึ้น</p>
+
+      <div class="sectionTitle">สายพันธุ์ปลา</div>
+      <div id="fishShop" class="shopGrid"></div>
+
+      <div class="sectionTitle">อัปเกรดตู้ปลา</div>
+      <div id="upgradeShop" class="shopGrid"></div>
+
+      <button id="closeShopBtn" class="secondary">ปิดร้านค้า</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const SAVE_KEY = "aqua-pocket-deluxe-v2";
+  const FISH_TYPES = {
+    goldfish: {
+      key:"goldfish", name:"ปลาทอง", emoji:"🐠", price:25, desc:"พื้นฐาน สมดุล เก็บเหรียญสม่ำเสมอ",
+      hue:[26,54], body:"gold", growthMul:1.0, hungerMul:1.0, hpMul:1.0, coinBase:2, coinRate:1.0, speed:1.0, rarity:1
+    },
+    clownfish: {
+      key:"clownfish", name:"ปลาการ์ตูน", emoji:"🐟", price:45, desc:"โตเร็ว คล่องตัว หาอาหารเก่ง",
+      hue:[14,28], body:"clown", growthMul:1.2, hungerMul:1.08, hpMul:0.95, coinBase:2, coinRate:1.05, speed:1.15, rarity:1
+    },
+    angelfish: {
+      key:"angelfish", name:"ปลาเทพา", emoji:"🪼", price:80, desc:"มูลค่าเหรียญสูง โตช้ากว่าเล็กน้อย",
+      hue:[186,220], body:"angel", growthMul:0.95, hungerMul:0.92, hpMul:1.08, coinBase:4, coinRate:1.18, speed:0.92, rarity:1
+    },
+    puffer: {
+      key:"puffer", name:"ปลาพองตัว", emoji:"🐡", price:130, desc:"อึดมาก ทนศัตรูและหิวง่ายน้อยลง",
+      hue:[40,58], body:"puffer", growthMul:0.88, hungerMul:0.82, hpMul:1.28, coinBase:5, coinRate:1.15, speed:0.8, rarity:1
+    },
+    shark: {
+      key:"shark", name:"ฉลามจิ๋ว", emoji:"🦈", price:220, desc:"แพงแต่คุ้ม ออกเหรียญเยอะและว่ายเร็ว",
+      hue:[195,215], body:"shark", growthMul:1.05, hungerMul:1.02, hpMul:1.16, coinBase:7, coinRate:1.35, speed:1.18, rarity:1
+    }
+  };
+
+  const ENEMY_TYPES = [
+    {key:"shadow", name:"ปลาเงา", emoji:"👾", hpMul:1, speedMul:1, damageMul:1, rewardMul:1, tint:"#5e2b7d"},
+    {key:"jelly", name:"แมงกะพรุนผี", emoji:"🪼", hpMul:.82, speedMul:1.22, damageMul:.88, rewardMul:1.05, tint:"#7e53b8"},
+    {key:"crab", name:"ปูกรงเล็บ", emoji:"🦀", hpMul:1.28, speedMul:.86, damageMul:1.25, rewardMul:1.18, tint:"#7d3142"},
+  ];
+
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const $ = id => document.getElementById(id);
+  const ui = {
+    coins:$("coins"), goal:$("goal"), wave:$("wave"), tankStats:$("tankStats"),
+    toast:$("toast"), speciesStrip:$("speciesStrip"), fishShop:$("fishShop"), upgradeShop:$("upgradeShop"),
+    shopOverlay:$("shopOverlay"), startOverlay:$("startOverlay"), pauseOverlay:$("pauseOverlay")
+  };
+
+  let W=0,H=0,DPR=1, tankTop=90, tankBottom=0, last=0, running=false, paused=false;
+  let audioCtx=null, drawTimer=0;
+
+  const state = {
+    coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], bubbles:[], corals:[],
+    snail:null, elapsed:0, nextEnemy:24, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
+    selectedType:"goldfish", shopFocus:"goldfish"
+  };
+
+  function pearlCost(){ return Math.round((500*Math.pow(1.55,state.pearlLevel))/10)*10; }
+  function rescueCost(){ return Math.min(Math.floor(state.coins),40+state.rescues*12+Math.max(0,state.wave-1)*2); }
+
+  function fit(){
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    const r=canvas.getBoundingClientRect();
+    W=r.width; H=r.height; tankBottom=H-150;
+    canvas.width=Math.floor(W*DPR); canvas.height=Math.floor(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    buildDecor();
+  }
+  addEventListener("resize",fit,{passive:true});
+
+  function buildDecor(){
+    state.bubbles=[];
+    for(let i=0;i<Math.max(22,Math.floor(W/18));i++){
+      state.bubbles.push({x:Math.random()*W,y:tankTop+Math.random()*(tankBottom-tankTop),r:1+Math.random()*5,s:.16+Math.random()*.55,a:.12+Math.random()*.25});
+    }
+    state.corals = [];
+    for(let i=0;i<9;i++){
+      state.corals.push({
+        x: 25 + i*(W-50)/8 + (Math.random()*18-9),
+        h: 40+Math.random()*95,
+        kind: i%3
+      });
+    }
+  }
+
+  function beep(freq=440,dur=.05,type="sine",gain=.03){
+    if(!audioCtx) return;
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.frequency.value=freq; o.type=type; g.gain.value=gain;
+    o.connect(g); g.connect(audioCtx.destination); o.start();
+    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime+dur);
+    o.stop(audioCtx.currentTime+dur);
+  }
+
+  function toast(msg){
+    ui.toast.textContent=msg;ui.toast.classList.add("show");
+    clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.classList.remove("show"),1200);
+  }
+
+  function randomType(){
+    const r = Math.random();
+    if(r>.94) return "shark";
+    if(r>.78) return "puffer";
+    if(r>.58) return "angelfish";
+    if(r>.33) return "clownfish";
+    return "goldfish";
+  }
+
+  function reset(loadSaved=false){
+    state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];
+    state.snail=null;state.elapsed=0;state.nextEnemy=24;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
+    state.selectedType="goldfish";
+    if(loadSaved && loadProgress()){
+      running=true; paused=false; updateUI(); renderSpeciesStrip(); return;
+    }
+    spawnFish(W*.38,H*.45,"goldfish");
+    spawnFish(W*.62,H*.48,"clownfish");
+    running=true; paused=false;
+    updateUI(); renderSpeciesStrip(); saveProgress();
+  }
+
+  function saveProgress(){
+    if(!running) return;
+    try{
+      const data = {
+        coins:Math.floor(state.coins), foodLevel:state.foodLevel, pearlLevel:state.pearlLevel, wave:state.wave,
+        rescues:state.rescues, selectedType:state.selectedType, snail:!!state.snail,
+        fish:state.fish.slice(0,28).map(f=>({
+          type:f.type, growth:f.growth, health:Math.max(40,f.health), hunger:Math.min(98,f.hunger), hueShift:f.hueShift
+        }))
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+
+  function loadProgress(){
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return false;
+      const data = JSON.parse(raw);
+      if(!data || !Array.isArray(data.fish)) return false;
+      state.coins = Math.max(0, Number(data.coins)||30);
+      state.foodLevel = Math.min(5, Math.max(1, Number(data.foodLevel)||1));
+      state.pearlLevel = Math.max(0, Number(data.pearlLevel)||0);
+      state.wave = Math.max(1, Number(data.wave)||1);
+      state.rescues = Math.max(0, Number(data.rescues)||0);
+      state.selectedType = FISH_TYPES[data.selectedType] ? data.selectedType : "goldfish";
+      state.snail = data.snail ? {x:W*.2,y:tankBottom-12,vx:24,dir:1} : null;
+      state.elapsed = 0; state.nextEnemy = 15; state.foods=[]; state.coinsDrop=[]; state.enemies=[];
+      state.fish=[];
+      if(data.fish.length===0) data.fish.push({type:"goldfish"});
+      data.fish.slice(0,28).forEach((saved,i)=>{
+        const type = FISH_TYPES[saved.type] ? saved.type : "goldfish";
+        spawnFish(50+Math.random()*Math.max(60,W-100), tankTop+60+Math.random()*Math.max(80,tankBottom-tankTop-120), type);
+        const f=state.fish[state.fish.length-1];
+        f.growth = Math.max(0, Number(saved.growth)||0);
+        f.health = Math.max(40, Number(saved.health)||100);
+        f.hunger = Math.min(98, Number(saved.hunger)||35);
+        f.size = Math.min(1.85, f.baseSize + f.growth/140);
+        f.hueShift = Number(saved.hueShift)||0;
+      });
+      toast("โหลดตู้ปลาเดิมแล้ว");
+      return true;
+    }catch(e){ return false; }
+  }
+
+  function spawnFish(x,y,typeKey){
+    const type = FISH_TYPES[typeKey] || FISH_TYPES.goldfish;
+    const side=Math.random()<.5?-1:1;
+    const hueBase = type.hue[0] + Math.random()*(type.hue[1]-type.hue[0]);
+    state.fish.push({
+      type:type.key, typeData:type,
+      x,y,vx:side*(24+Math.random()*18)*type.speed,vy:(Math.random()-.5)*14,dir:side,
+      hunger:24+Math.random()*16,growth:0,health:100,coinTimer:6+Math.random()*3,
+      hueBase,hueShift:(Math.random()-.5)*10,wobble:Math.random()*10,baseSize:.8+.06*Math.random(),size:.82,
+      temperament:.85+Math.random()*.35
+    });
+  }
+
+  function createFood(x,y){
+    if(state.coins<=0){ toast("เหรียญหมด — รอปลาออกเหรียญ"); return; }
+    if(state.foods.length>=10){ toast("อาหารในตู้เยอะแล้ว"); return; }
+    state.coins-=1;
+    state.foods.push({x,y,vy:30+state.foodLevel*8,life:14,size:5+state.foodLevel*1.6});
+    beep(560,.04,"triangle",.016); updateUI(); saveProgress();
+  }
+
+  function dropCoin(x,y,value,style="coin"){
+    state.coinsDrop.push({x,y,vy:-22,life:14,value,style,spin:Math.random()*6.2,r:value>=10?13:11});
+  }
+
+  function spawnEnemy(){
+    const baseWave = Math.max(1,state.wave);
+    const et = ENEMY_TYPES[Math.floor(Math.random()*ENEMY_TYPES.length)];
+    const hp = Math.max(5, Math.floor((5+baseWave*1.55) * et.hpMul));
+    state.enemies.push({
+      key:et.key, type:et,
+      x:Math.random()<.5?-55:W+55,y:tankTop+80+Math.random()*(tankBottom-tankTop-190),
+      vx:Math.random()<.5?48:-48,hp,maxHp:hp,target:null,wobble:Math.random()*8,
+      speed:(34+Math.min(50,baseWave*1.2))*et.speedMul,
+      damage:(34+Math.min(16,baseWave*.6))*et.damageMul
+    });
+    state.wave++;
+    state.nextEnemy=state.elapsed+Math.max(11,40-Math.min(28,baseWave*1.15));
+    toast(`${et.name} บุก! แตะเพื่อโจมตี`);
+    beep(100,.24,"sawtooth",.04); updateUI();
+  }
+
+  function upgradeTank(){
+    const cost = pearlCost();
+    if(state.coins<cost){ toast("เหรียญไม่พอ"); return; }
+    state.coins-=cost; state.pearlLevel++;
+    state.fish.forEach(f=>{
+      f.health = 100;
+      f.hunger = Math.min(f.hunger,30);
+      f.growth += 7;
+      f.size = Math.min(1.85, f.baseSize + f.growth/140);
+    });
+    if(state.fish.length < 30){
+      spawnFish(W*.5, tankTop+100+Math.random()*Math.max(80,tankBottom-tankTop-200), randomType());
+    }
+    dropCoin(W*.5,tankTop+110,25+state.pearlLevel*10,"gem");
+    toast(`ตู้ระดับ ${state.pearlLevel}! โบนัสถาวรเพิ่มขึ้น`);
+    beep(523,.08,"sine",.05);setTimeout(()=>beep(659,.1,"sine",.05),100);setTimeout(()=>beep(784,.14,"sine",.05),220);
+    updateUI(); renderShop(); renderSpeciesStrip(); saveProgress();
+  }
+
+  function buyFish(typeKey){
+    const type = FISH_TYPES[typeKey];
+    if(!type) return;
+    if(state.coins < type.price){ toast("เหรียญไม่พอ"); beep(180,.08,"square",.022); return; }
+    if(state.fish.length >= 30){ toast("ตู้ปลาแน่นแล้ว"); return; }
+    state.coins -= type.price;
+    spawnFish(W*.5, tankTop+100+Math.random()*Math.max(80,tankBottom-tankTop-200), type.key);
+    state.selectedType = type.key;
+    toast(`ซื้อ${type.name}แล้ว`);
+    beep(760,.07,"triangle",.03);
+    updateUI(); renderShop(); renderSpeciesStrip(); saveProgress();
+  }
+
+  function buy(kind){
+    const prices={food:40+(state.foodLevel-1)*35,snail:120};
+    const price=prices[kind];
+    if(state.coins<price){toast("เหรียญไม่พอ");beep(150,.08,"square",.025);return}
+    if(kind==="snail"&&state.snail){toast("มีหอยผู้ช่วยแล้ว");return}
+    if(kind==="food"&&state.foodLevel>=5){toast("อาหารระดับสูงสุดแล้ว");return}
+    state.coins-=price;
+    if(kind==="food"){state.foodLevel++;toast("อาหารดีขึ้น ปลาโตไวขึ้น")}
+    if(kind==="snail"){state.snail={x:W*.2,y:tankBottom-12,vx:24,dir:1};toast("หอยจะเก็บเหรียญใกล้พื้น")}
+    beep(740,.08,"triangle",.03);updateUI();renderShop();saveProgress();
+  }
+
+  function rescueTank(force=false){
+    if(state.rescueCooldown>0 && !force){ toast("หน่วยกู้ภัยกำลังพัก"); return; }
+    const fee = force ? 0 : rescueCost();
+    if(!force && state.coins < fee){ toast("เหรียญไม่พอสำหรับกู้ตู้ปลา"); return; }
+    state.coins -= fee;
+    state.enemies.length = 0;
+    state.foods.length = 0;
+    state.rescues++;
+    state.rescueCooldown = 18;
+    const toSpawn = Math.max(2,1+Math.min(4,state.pearlLevel));
+    for(let i=0;i<toSpawn;i++) setTimeout(()=>{
+      spawnFish(W*.5 + (Math.random()-.5)*90, tankTop+120+Math.random()*80, randomType());
+      if(i===toSpawn-1){ updateUI(); renderSpeciesStrip(); saveProgress(); }
+    }, i*260);
+    toast(fee>0 ? `กู้ตู้ปลาแล้ว -${fee} เหรียญ` : "กู้ตู้ปลาอัตโนมัติ");
+    beep(610,.08,"triangle",.03);
+    updateUI(); saveProgress();
+  }
+
+  function updateUI(){
+    ui.coins.textContent=Math.floor(state.coins);
+    ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
+    ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`;
+    ui.tankStats.textContent=`ปลา ${state.fish.length} ตัว • กู้ภัย ${state.rescues} ครั้ง`;
+  }
+
+  function nearest(arr,x,y,max=1e9){
+    let best=null,bd=max*max;
+    for(const o of arr){const dx=o.x-x,dy=o.y-y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=o}}
+    return best;
+  }
+
+  function collectCoin(c){
+    const idx=state.coinsDrop.indexOf(c); if(idx<0) return;
+    const bonus = Math.round(c.value*(1+state.pearlLevel*.15));
+    state.coins += bonus; state.coinsDrop.splice(idx,1); state.combo++;
+    beep(700+Math.min(500,state.combo*18),.045,"triangle",.023); updateUI();
+  }
+
+  function renderSpeciesStrip(){
+    ui.speciesStrip.innerHTML="";
+    Object.values(FISH_TYPES).forEach(type=>{
+      const btn=document.createElement("button");
+      btn.className="chip"+(state.selectedType===type.key?" selected":"");
+      btn.type="button";
+      btn.textContent=`${type.emoji} ${type.name}`;
+      btn.onclick=()=>{ state.selectedType=type.key; renderSpeciesStrip(); };
+      ui.speciesStrip.appendChild(btn);
+    });
+  }
+
+  function renderShop(){
+    ui.fishShop.innerHTML="";
+    Object.values(FISH_TYPES).forEach(type=>{
+      const row=document.createElement("div");
+      row.className="shopItem";
+      row.innerHTML=`<div class="shopEmoji">${type.emoji}</div>
+      <div class="shopMeta"><b>${type.name}</b><small>${type.desc}<br>ราคา ${type.price} • เหรียญพื้นฐาน ${type.coinBase}</small></div>`;
+      const btn=document.createElement("button");
+      btn.className="buyBtn"; btn.textContent=`${type.price} 🪙`; btn.disabled=state.coins<type.price||state.fish.length>=30;
+      btn.onclick=()=>buyFish(type.key);
+      row.appendChild(btn); ui.fishShop.appendChild(row);
+    });
+
+    ui.upgradeShop.innerHTML="";
+    const upgrades = [
+      {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • ปลาโตไวขึ้น`, price:state.foodLevel>=5?null:40+(state.foodLevel-1)*35, action:()=>buy("food")},
+      {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:120, action:()=>buy("snail")},
+      {emoji:"🦪", name:`อัปตู้ Lv.${state.pearlLevel+1}`, desc:"เพิ่มโบนัสถาวร เรียกปลาพิเศษ และออกเหรียญคุ้มขึ้น", price:pearlCost(), action:upgradeTank},
+      {emoji:"🛟", name:"หน่วยกู้ภัย", desc:`คืนชีวิตให้ตู้ปลา • ค่าใช้จ่าย ${rescueCost()} เหรียญ`, price:rescueCost(), action:()=>rescueTank(false)},
+    ];
+    upgrades.forEach(u=>{
+      const row=document.createElement("div");
+      row.className="shopItem";
+      row.innerHTML=`<div class="shopEmoji">${u.emoji}</div><div class="shopMeta"><b>${u.name}</b><small>${u.desc}</small></div>`;
+      const btn=document.createElement("button");
+      btn.className="buyBtn";
+      if(u.price==null){ btn.textContent="MAX"; btn.disabled=true; }
+      else { btn.textContent=`${u.price.toLocaleString("th-TH")} 🪙`; btn.disabled=state.coins<u.price; }
+      if(u.name==="หอยเก็บเหรียญ" && state.snail) btn.disabled=true;
+      btn.onclick=u.action; row.appendChild(btn); ui.upgradeShop.appendChild(row);
+    });
+  }
+
+  function update(dt){
+    state.elapsed+=dt;
+    state.rescueCooldown=Math.max(0,state.rescueCooldown-dt);
+
+    for(const b of state.bubbles){
+      b.y-=b.s*60*dt; if(b.y<tankTop){ b.y=tankBottom; b.x=Math.random()*W; }
+    }
+
+    for(let i=state.foods.length-1;i>=0;i--){
+      const f=state.foods[i];f.y+=f.vy*dt;f.life-=dt;
+      if(f.y>tankBottom-10){f.y=tankBottom-10;f.vy=0}
+      if(f.life<=0)state.foods.splice(i,1);
+    }
+
+    for(let i=state.fish.length-1;i>=0;i--){
+      const f=state.fish[i], t=f.typeData;
+      f.hunger+=dt*(1.45+f.size*.25)*t.hungerMul*Math.max(.55,1-state.pearlLevel*.035);
+      f.wobble+=dt*(3.5+t.speed*.7);
+      const target=nearest(state.foods,f.x,f.y,240);
+      if(target&&f.hunger>22){
+        let dx=target.x-f.x,dy=target.y-f.y,d=Math.hypot(dx,dy)||1;
+        f.vx+=(dx/d)*95*t.speed*dt;f.vy+=(dy/d)*85*t.speed*dt;
+        if(d<18+f.size*8){
+          const idx=state.foods.indexOf(target);if(idx>=0)state.foods.splice(idx,1);
+          f.hunger=Math.max(0,f.hunger-(38+state.foodLevel*7));
+          f.growth+= (6.7+state.foodLevel*2.2)*t.growthMul; f.size=Math.min(1.85,f.baseSize+f.growth/140);
+          beep(300+f.size*120,.03,"sine",.01);
+        }
+      } else {
+        f.vx+=(Math.random()-.5)*28*dt*t.speed;f.vy+=(Math.random()-.5)*18*dt*t.speed;
+      }
+      const speed=Math.hypot(f.vx,f.vy), max=(42+f.size*22)*t.speed;
+      if(speed>max){f.vx=f.vx/speed*max;f.vy=f.vy/speed*max}
+      f.x+=f.vx*dt;f.y+=f.vy*dt; if(Math.abs(f.vx)>3)f.dir=Math.sign(f.vx);
+      const pad=26+f.size*13;
+      if(f.x<pad){f.x=pad;f.vx=Math.abs(f.vx)}
+      if(f.x>W-pad){f.x=W-pad;f.vx=-Math.abs(f.vx)}
+      if(f.y<tankTop+40){f.y=tankTop+40;f.vy=Math.abs(f.vy)}
+      if(f.y>tankBottom-40){f.y=tankBottom-40;f.vy=-Math.abs(f.vy)}
+      if(f.hunger>100){f.health-=dt*(5.4+(f.hunger-100)*.06)/t.hpMul}
+      else f.health=Math.min(100,f.health+dt*.5*t.hpMul);
+      f.coinTimer-=dt;
+      if(f.size>1.0&&f.coinTimer<=0){
+        const base = t.coinBase;
+        const val=f.size>1.55?Math.max(7,Math.round(base*2.4)):f.size>1.28?Math.max(4,Math.round(base*1.6)):base;
+        dropCoin(f.x,f.y,val);
+        f.coinTimer=Math.max(3.8,9-(f.size*2.2+t.coinRate*1.6))+Math.random()*2.7;
+      }
+      if(f.health<=0){state.fish.splice(i,1);toast(`${t.name} หายไปแล้ว`)}
+    }
+
+    for(let i=state.coinsDrop.length-1;i>=0;i--){
+      const c=state.coinsDrop[i];c.vy+=70*dt;c.y+=c.vy*dt;c.life-=dt;c.spin+=dt*7;
+      if(c.y>tankBottom-15){c.y=tankBottom-15;c.vy*=-.25}
+      if(c.life<=0)state.coinsDrop.splice(i,1);
+    }
+
+    if(state.snail){
+      const s=state.snail;s.x+=s.vx*s.dir*dt;if(s.x<30){s.x=30;s.dir=1}if(s.x>W-30){s.x=W-30;s.dir=-1}
+      const c=nearest(state.coinsDrop,s.x,s.y,120);
+      if(c){let dx=c.x-s.x,dy=c.y-s.y,d=Math.hypot(dx,dy)||1;c.x-=dx/d*65*dt;c.y-=dy/d*65*dt; if(d<24)collectCoin(c);}
+    }
+
+    for(let i=state.enemies.length-1;i>=0;i--){
+      const e=state.enemies[i]; e.wobble+=dt*3;
+      if(!e.target||!state.fish.includes(e.target))e.target=nearest(state.fish,e.x,e.y);
+      if(e.target){
+        const dx=e.target.x-e.x,dy=e.target.y-e.y,d=Math.hypot(dx,dy)||1;
+        e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;e.vx=dx;
+        if(d<25+e.target.size*10){
+          e.target.health-=e.damage*dt*(1-Math.min(.45,state.pearlLevel*.045));
+        }
+      }
+      if(e.hp<=0){
+        dropCoin(e.x,e.y,Math.round((18+Math.floor(state.wave*2.1))*e.type.rewardMul), e.key==="jelly"?"gem":"coin");
+        state.enemies.splice(i,1); toast(`กำจัด${e.type.name}แล้ว!`); saveProgress();
+      }
+    }
+
+    if(state.elapsed>=state.nextEnemy&&state.enemies.length===0)spawnEnemy();
+    if(state.fish.length===0) rescueTank(true);
+  }
+
+  function drawRoundRect(x,y,w,h,r){
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,r);
+  }
+
+  function drawBackground(){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,"#0a5e82");g.addColorStop(.48,"#0880a5");g.addColorStop(1,"#063c5d");
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    const skyGlow=ctx.createRadialGradient(W*.5,tankTop,20,W*.5,tankTop,W*.8);
+    skyGlow.addColorStop(0,"rgba(190,246,255,.30)"); skyGlow.addColorStop(1,"rgba(0,45,80,0)");
+    ctx.fillStyle=skyGlow; ctx.fillRect(0,tankTop,W,tankBottom-tankTop);
+
+    ctx.save(); ctx.globalAlpha=.18; ctx.fillStyle="#d8fcff";
+    for(let i=0;i<7;i++){
+      ctx.beginPath();
+      ctx.moveTo(W*(i/6)-80,tankTop);
+      ctx.lineTo(W*(i/6)+35,tankTop);
+      ctx.lineTo(W*(i/6)+155,tankBottom);
+      ctx.lineTo(W*(i/6)+30,tankBottom);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    for(const b of state.bubbles){
+      ctx.globalAlpha=b.a; ctx.strokeStyle="#d1fdff"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.globalAlpha=1;
+
+    ctx.fillStyle="#d4af6c"; ctx.beginPath(); ctx.moveTo(0,tankBottom-8);
+    for(let x=0;x<=W;x+=18) ctx.lineTo(x,tankBottom-12+Math.sin(x*.09)*5+Math.cos(x*.17)*2);
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+
+    state.corals.forEach(c=>{
+      ctx.save(); ctx.translate(c.x, tankBottom+8);
+      if(c.kind===0){
+        ctx.strokeStyle="#4cc38b"; ctx.lineWidth=7; ctx.lineCap="round";
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.quadraticCurveTo(-16,-c.h*.45,6,-c.h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0,-12); ctx.quadraticCurveTo(18,-c.h*.55,10,-c.h*.84); ctx.stroke();
+      }else if(c.kind===1){
+        ctx.fillStyle="#c76df5";
+        for(let i=0;i<4;i++){
+          ctx.beginPath(); ctx.ellipse(i*8-12,-c.h*.25-i*10,10,16,0,0,Math.PI*2); ctx.fill();
+        }
+      }else{
+        ctx.fillStyle="#ff8f68";
+        for(let i=0;i<3;i++){
+          ctx.beginPath(); ctx.roundRect(i*10-12,-c.h*.3-i*14,9,26,6); ctx.fill();
+        }
+      }
+      ctx.restore();
+    });
+  }
+
+  function drawFood(f){
+    ctx.fillStyle="#ffb56b";ctx.beginPath();ctx.arc(f.x,f.y,f.size,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=1;ctx.stroke();
+  }
+
+  function drawCoin(c){
+    ctx.save();ctx.translate(c.x,c.y);ctx.scale(.55+.45*Math.abs(Math.cos(c.spin)),1);
+    if(c.style==="gem"){
+      ctx.fillStyle="#8cf2ff";
+      ctx.beginPath(); ctx.moveTo(0,-c.r); ctx.lineTo(c.r*.8,0); ctx.lineTo(0,c.r); ctx.lineTo(-c.r*.8,0); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#ffffff"; ctx.lineWidth=2; ctx.stroke();
+    } else {
+      ctx.fillStyle="#ffd45f";ctx.beginPath();ctx.arc(0,0,c.r,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle="#fff0a0";ctx.lineWidth=2;ctx.stroke();
+    }
+    ctx.fillStyle=c.style==="gem"?"#11475e":"#9b6814";ctx.font="bold 12px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(c.value,0,1);
+    ctx.restore();
+  }
+
+  function drawFish(f){
+    const t=f.typeData;
+    const hue = f.hueBase + f.hueShift;
+    ctx.save(); ctx.translate(f.x,f.y); ctx.scale(f.dir*f.size,f.size); ctx.rotate(Math.sin(f.wobble)*.04);
+    ctx.shadowColor="rgba(0,0,0,.20)"; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+    if(t.body==="gold"){
+      const grad=ctx.createLinearGradient(-24,0,24,0);
+      grad.addColorStop(0,`hsl(${hue},88%,44%)`); grad.addColorStop(.55,`hsl(${hue+6},94%,58%)`); grad.addColorStop(1,`hsl(${hue+18},95%,73%)`);
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.ellipse(0,0,24,14,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-21,0); ctx.lineTo(-40,-16); ctx.lineTo(-35,16); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4,-4); ctx.lineTo(8,-19); ctx.lineTo(2,-4); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-2,4); ctx.lineTo(11,17); ctx.lineTo(3,4); ctx.closePath(); ctx.fill();
+    } else if(t.body==="clown"){
+      ctx.fillStyle="#ff8d3c"; ctx.beginPath(); ctx.ellipse(0,0,23,13,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-19,0); ctx.lineTo(-36,-14); ctx.lineTo(-31,14); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#ffffff"; ctx.lineWidth=5;
+      [-7,4,15].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,-12); ctx.lineTo(x,12); ctx.stroke(); });
+    } else if(t.body==="angel"){
+      const grad=ctx.createLinearGradient(-18,-16,18,18);
+      grad.addColorStop(0,`hsl(${hue},75%,70%)`); grad.addColorStop(1,`hsl(${hue+25},70%,45%)`);
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.moveTo(-18,0); ctx.quadraticCurveTo(-4,-15,18,-6); ctx.quadraticCurveTo(16,16,-4,15); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-2,-14); ctx.lineTo(8,-30); ctx.lineTo(4,-10); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-4,13); ctx.lineTo(10,31); ctx.lineTo(2,14); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.55)"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(-8,-8); ctx.lineTo(7,10); ctx.stroke();
+    } else if(t.body==="puffer"){
+      const grad=ctx.createRadialGradient(2,-2,4,0,0,26);
+      grad.addColorStop(0,"#fff2a0"); grad.addColorStop(1,"#e3b652");
+      ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#d2913c";
+      for(let i=0;i<10;i++){ const a=i*Math.PI*2/10; ctx.beginPath(); ctx.moveTo(Math.cos(a)*17,Math.sin(a)*17); ctx.lineTo(Math.cos(a)*24,Math.sin(a)*24); ctx.lineWidth=2; ctx.strokeStyle="#d2913c"; ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(-17,0); ctx.lineTo(-30,-10); ctx.lineTo(-26,10); ctx.closePath(); ctx.fill();
+    } else if(t.body==="shark"){
+      const grad=ctx.createLinearGradient(-28,0,30,0);
+      grad.addColorStop(0,"#6e98ba"); grad.addColorStop(1,"#b6d3ec");
+      ctx.fillStyle=grad;
+      ctx.beginPath(); ctx.ellipse(0,0,28,13,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-22,0); ctx.lineTo(-44,-12); ctx.lineTo(-38,12); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(2,-8); ctx.lineTo(9,-24); ctx.lineTo(14,-6); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(5,6); ctx.lineTo(16,15); ctx.lineTo(0,11); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#ffffff"; ctx.lineWidth=1.6; ctx.beginPath(); ctx.moveTo(11,5); ctx.lineTo(18,5); ctx.stroke();
+    }
+    ctx.shadowColor="transparent";
+    ctx.fillStyle="rgba(255,255,255,.38)"; ctx.beginPath(); ctx.ellipse(6,-5,10,4,-.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(12,-2,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle="#07213a"; ctx.beginPath(); ctx.arc(13,-2,2,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    if(f.hunger>72){
+      ctx.fillStyle="rgba(3,28,47,.75)"; drawRoundRect(f.x-22,f.y-30,44,5,3); ctx.fill();
+      ctx.fillStyle=f.hunger>100?"#ff7390":"#ffd766"; drawRoundRect(f.x-22,f.y-30,44*Math.max(0,1-f.hunger/130),5,3); ctx.fill();
+    }
+  }
+
+  function drawEnemy(e){
+    ctx.save(); ctx.translate(e.x,e.y); ctx.scale(Math.sign(e.vx)||1,1); ctx.rotate(Math.sin(e.wobble)*.06);
+    if(e.key==="shadow"){
+      ctx.fillStyle="#522c78"; ctx.beginPath(); ctx.ellipse(0,0,38,22,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#2d164c"; ctx.beginPath(); ctx.moveTo(-30,0); ctx.lineTo(-58,-25); ctx.lineTo(-52,25); ctx.closePath(); ctx.fill();
+      ctx.fillStyle="#ff5d8f"; ctx.beginPath(); ctx.arc(18,-5,5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.moveTo(22,8); ctx.lineTo(10,6); ctx.lineTo(18,15); ctx.fill();
+    }else if(e.key==="jelly"){
+      ctx.fillStyle="#8f73ff"; ctx.beginPath(); ctx.arc(0,-2,24,Math.PI,0); ctx.lineTo(24,10); ctx.quadraticCurveTo(0,20,-24,10); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle="#c7bbff"; ctx.lineWidth=3;
+      [-12,-4,4,12].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,10); ctx.quadraticCurveTo(x+4,20,x-2,32); ctx.stroke(); });
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(-8,-2,3,0,Math.PI*2); ctx.arc(8,-2,3,0,Math.PI*2); ctx.fill();
+    }else{
+      ctx.fillStyle="#bc4a5f"; ctx.beginPath(); ctx.arc(-12,0,14,0,Math.PI*2); ctx.arc(12,0,14,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0,0,28,17,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#ff8e7c";
+      ctx.beginPath(); ctx.moveTo(-22,-4); ctx.lineTo(-42,-20); ctx.lineTo(-34,-2); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(22,-4); ctx.lineTo(42,-20); ctx.lineTo(34,-2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(-9,-2,3,0,Math.PI*2); ctx.arc(9,-2,3,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    ctx.fillStyle="rgba(0,0,0,.5)"; drawRoundRect(e.x-34,e.y-34,68,7,4); ctx.fill();
+    ctx.fillStyle=e.key==="crab"?"#ff8b7a":e.key==="jelly"?"#9fd1ff":"#ff678c"; drawRoundRect(e.x-34,e.y-34,68*(e.hp/e.maxHp),7,4); ctx.fill();
+  }
+
+  function drawSnail(s){
+    ctx.save();ctx.translate(s.x,s.y);ctx.scale(s.dir,1);
+    ctx.fillStyle="#ffc26c";ctx.beginPath();ctx.ellipse(4,-6,21,9,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#ae6edd";ctx.beginPath();ctx.arc(-5,-13,15,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="#744297";ctx.lineWidth=3;ctx.beginPath();ctx.arc(-5,-13,8,0,Math.PI*1.7);ctx.stroke();
+    ctx.strokeStyle="#ffc26c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(18,-12);ctx.lineTo(24,-24);ctx.moveTo(12,-12);ctx.lineTo(15,-24);ctx.stroke();ctx.restore();
+  }
+
+  function draw(){
+    drawBackground();
+    for(const f of state.foods) drawFood(f);
+    for(const c of state.coinsDrop) drawCoin(c);
+    if(state.snail) drawSnail(state.snail);
+    state.fish.forEach(drawFish);
+    state.enemies.forEach(drawEnemy);
+  }
+
+  function loop(t){
+    const dt=Math.min(.034,(t-last)/1000||0); last=t;
+    if(running&&!paused) update(dt);
+    draw(); requestAnimationFrame(loop);
+  }
+
+  function pointerPos(ev){
+    const r=canvas.getBoundingClientRect();
+    const p=ev.touches?ev.touches[0]:ev;
+    return {x:p.clientX-r.left,y:p.clientY-r.top};
+  }
+
+  function act(ev){
+    ev.preventDefault();
+    if(!running||paused) return;
+    const p=pointerPos(ev);
+    let c=nearest(state.coinsDrop,p.x,p.y,34);
+    if(c){ collectCoin(c); saveProgress(); return; }
+    const e=nearest(state.enemies,p.x,p.y,60);
+    if(e){ e.hp-=1+(state.pearlLevel>0?.35*state.pearlLevel:0); beep(150+Math.random()*60,.04,"square",.022); return; }
+    if(p.y>tankTop&&p.y<tankBottom-5) createFood(p.x,p.y);
+  }
+
+  canvas.addEventListener("pointerdown",act,{passive:false});
+  $("feedHintBtn").onclick=()=>toast("แตะในตู้ปลาเพื่อให้อาหาร");
+  $("shopBtn").onclick=()=>{ renderShop(); ui.shopOverlay.classList.remove("hidden"); };
+  $("closeShopBtn").onclick=()=> ui.shopOverlay.classList.add("hidden");
+  $("saveBtn").onclick=()=>{ saveProgress(); toast("บันทึกความคืบหน้าแล้ว"); };
+  $("rescueBtn").onclick=()=> rescueTank(false);
+
+  $("startBtn").onclick=()=>{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    ui.startOverlay.classList.add("hidden");
+    reset(true);
+  };
+  $("newBtn").onclick=()=>{
+    localStorage.removeItem(SAVE_KEY);
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    ui.startOverlay.classList.add("hidden");
+    reset(false);
+  };
+  $("pauseBtn").onclick=()=>{ if(!running) return; paused=true; ui.pauseOverlay.classList.remove("hidden"); saveProgress(); };
+  $("resumeBtn").onclick=()=>{ paused=false; last=performance.now(); ui.pauseOverlay.classList.add("hidden"); };
+  $("restartPauseBtn").onclick=()=>{ localStorage.removeItem(SAVE_KEY); ui.pauseOverlay.classList.add("hidden"); reset(false); };
+
+  document.addEventListener("visibilitychange",()=>{ if(document.hidden&&running){ saveProgress(); paused=true; ui.pauseOverlay.classList.remove("hidden"); } });
+  setInterval(()=>{ if(running&&!paused) saveProgress(); },5000);
+  addEventListener("pagehide", saveProgress);
+
+  fit(); updateUI(); renderSpeciesStrip(); requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
