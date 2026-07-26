@@ -202,6 +202,210 @@
     .installNote{display:block;margin-top:7px;color:var(--muted);font-size:12px}
     .tips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 18px}
     .tip{background:rgba(99,216,255,.08);border:1px solid var(--line);border-radius:14px;padding:10px;font-size:13px}
+
+    /* หน้าเริ่มเกมแบบใหม่ */
+    #startOverlay{z-index:250}
+    .startOverlay{
+      padding:max(10px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 18% 12%,rgba(52,210,255,.24),transparent 28%),
+        radial-gradient(circle at 82% 22%,rgba(68,123,255,.22),transparent 30%),
+        linear-gradient(180deg,rgba(0,40,72,.72),rgba(0,13,29,.94));
+    }
+    .startOverlay::before,.startOverlay::after{
+      content:"";position:absolute;inset:auto;border-radius:50%;
+      pointer-events:none;opacity:.42
+    }
+    .startOverlay::before{
+      width:10px;height:10px;left:9%;bottom:12%;
+      box-shadow:
+        40px -110px 0 2px rgba(198,245,255,.38),
+        120px -30px 0 -1px rgba(198,245,255,.34),
+        220px -170px 0 3px rgba(198,245,255,.28),
+        330px -70px 0 1px rgba(198,245,255,.34),
+        450px -190px 0 2px rgba(198,245,255,.24);
+      animation:startBubbleRise 7s linear infinite
+    }
+    .startOverlay::after{
+      width:6px;height:6px;right:14%;bottom:2%;
+      box-shadow:
+        -20px -80px 0 1px rgba(198,245,255,.35),
+        -100px -210px 0 3px rgba(198,245,255,.24),
+        -250px -120px 0 1px rgba(198,245,255,.28),
+        -390px -250px 0 2px rgba(198,245,255,.24);
+      animation:startBubbleRise 9s linear infinite 1.2s
+    }
+    @keyframes startBubbleRise{
+      from{transform:translateY(32px);opacity:.08}
+      45%{opacity:.5}
+      to{transform:translateY(-70px);opacity:0}
+    }
+    .startCard{
+      position:relative;width:min(560px,100%);max-height:calc(100dvh - 24px);
+      overflow:auto;scrollbar-width:none;
+      padding:18px 16px 15px;border-radius:28px;
+      border:1px solid rgba(134,231,255,.42);
+      background:
+        linear-gradient(180deg,rgba(8,61,96,.96),rgba(3,31,57,.98));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.18),
+        0 22px 70px rgba(0,0,0,.46);
+      text-align:center
+    }
+    .startCard::-webkit-scrollbar{display:none}
+    .startCard::before{
+      content:"";position:absolute;left:0;right:0;top:0;height:34%;
+      pointer-events:none;border-radius:27px 27px 46% 46%;
+      background:linear-gradient(180deg,rgba(89,218,255,.18),transparent)
+    }
+    .startHero{
+      position:relative;display:grid;grid-template-columns:72px 1fr 72px;
+      align-items:center;gap:4px;min-height:104px
+    }
+    .startBrand{position:relative;z-index:2;min-width:0}
+    .startBrandMark{
+      display:inline-flex;align-items:center;gap:5px;
+      margin-bottom:2px;padding:4px 9px;border-radius:999px;
+      border:1px solid rgba(255,229,133,.42);
+      background:rgba(255,201,73,.10);
+      color:#ffe69b;font-size:10px;font-weight:900;letter-spacing:.08em
+    }
+    .startTitle{
+      margin:0;color:#f5fcff;
+      font-size:clamp(28px,7.3vw,45px);line-height:.94;letter-spacing:-1.8px;
+      text-shadow:0 5px 14px rgba(0,26,56,.55)
+    }
+    .startTitle span{display:block;color:#ffd45f;font-size:.72em;letter-spacing:-1px}
+    .startTagline{
+      margin:7px auto 0;max-width:300px;
+      color:#c8edf8;font-size:12px;line-height:1.35
+    }
+    .cuteFish{
+      width:82px;height:auto;overflow:visible;
+      filter:drop-shadow(0 7px 7px rgba(0,20,45,.34));
+      animation:menuFishFloat 3.4s ease-in-out infinite
+    }
+    .cuteFish.right{animation-delay:-1.4s}
+    @keyframes menuFishFloat{
+      0%,100%{transform:translateY(2px) rotate(-2deg)}
+      50%{transform:translateY(-5px) rotate(2deg)}
+    }
+    .startAquarium{
+      position:relative;height:108px;margin:5px 0 10px;
+      overflow:hidden;border-radius:22px;
+      border:1px solid rgba(129,231,255,.34);
+      background:
+        radial-gradient(circle at 50% -30%,rgba(184,248,255,.38),transparent 48%),
+        linear-gradient(180deg,#167ead 0%,#07547f 65%,#063e66 100%);
+      box-shadow:inset 0 8px 18px rgba(199,250,255,.09)
+    }
+    .startAquarium::before{
+      content:"";position:absolute;left:-5%;right:-5%;bottom:-13px;height:40px;
+      border-radius:50% 50% 0 0;
+      background:
+        radial-gradient(circle at 12% 15%,#ff8f79 0 5px,transparent 6px),
+        radial-gradient(circle at 28% 22%,#c576dc 0 7px,transparent 8px),
+        radial-gradient(circle at 74% 18%,#68d8a4 0 6px,transparent 7px),
+        radial-gradient(circle at 90% 24%,#ffb95c 0 5px,transparent 6px),
+        linear-gradient(180deg,#4e8e83,#295e69);
+      opacity:.86
+    }
+    .startAquarium::after{
+      content:"";position:absolute;inset:0;pointer-events:none;
+      background:
+        radial-gradient(circle at 12% 28%,rgba(223,253,255,.72) 0 2px,transparent 3px),
+        radial-gradient(circle at 85% 36%,rgba(223,253,255,.64) 0 3px,transparent 4px),
+        radial-gradient(circle at 67% 16%,rgba(223,253,255,.65) 0 2px,transparent 3px),
+        linear-gradient(105deg,transparent 20%,rgba(204,249,255,.08) 35%,transparent 48%)
+    }
+    .startSwimFish{
+      position:absolute;width:94px;height:auto;z-index:2;
+      filter:drop-shadow(0 6px 6px rgba(0,23,48,.32))
+    }
+    .startSwimFish.one{left:8%;top:16px;animation:swimBob 3s ease-in-out infinite}
+    .startSwimFish.two{right:7%;top:21px;animation:swimBob 3.3s ease-in-out infinite -1.2s}
+    .startPuffer{
+      position:absolute;left:50%;top:22px;z-index:3;
+      width:72px;transform:translateX(-50%);
+      animation:pufferBob 2.8s ease-in-out infinite
+    }
+    @keyframes swimBob{
+      0%,100%{transform:translateY(2px)}
+      50%{transform:translateY(-5px)}
+    }
+    @keyframes pufferBob{
+      0%,100%{transform:translate(-50%,2px) rotate(-2deg)}
+      50%{transform:translate(-50%,-4px) rotate(2deg)}
+    }
+    .startStats{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 9px
+    }
+    .startStat{
+      min-width:0;padding:7px 4px;border-radius:13px;
+      border:1px solid rgba(132,226,255,.23);
+      background:rgba(5,40,68,.67);
+      color:#eafaff;font-size:10px;font-weight:900
+    }
+    .startStat span{display:block;font-size:18px;margin-bottom:1px}
+    .startFeatures{
+      display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px
+    }
+    .startFeature{
+      padding:8px;border-radius:14px;text-align:left;
+      border:1px solid rgba(132,226,255,.20);
+      background:rgba(7,42,70,.64);
+      color:#e9faff;font-size:10px;line-height:1.25
+    }
+    .startFeature b{display:block;color:#fff;font-size:11px;margin-bottom:2px}
+    .startSaveStatus{
+      min-height:29px;display:flex;align-items:center;justify-content:center;
+      margin-bottom:9px;padding:6px 10px;border-radius:12px;
+      background:rgba(80,226,177,.10);
+      border:1px solid rgba(80,226,177,.28);
+      color:#bff8dd;font-size:10px;font-weight:800
+    }
+    .startPlayBtn{
+      min-height:58px;border-radius:18px;font-size:21px;
+      background:linear-gradient(135deg,#ffd45f,#ffb846);
+      color:#4a2b08;box-shadow:0 10px 28px rgba(255,187,65,.25)
+    }
+    .startPlayBtn:active{transform:translateY(2px)}
+    .startActions{
+      display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px
+    }
+    .startActions .secondary{
+      margin:0;min-height:43px;font-size:12px;background:rgba(8,45,73,.88)
+    }
+    .startInstallBtn{
+      min-height:42px;margin-top:8px;font-size:12px;border-radius:13px
+    }
+    .startInstallNote{font-size:9px;margin-top:5px}
+    @media (max-width:420px){
+      .startCard{padding:14px 12px 12px;border-radius:24px}
+      .startHero{grid-template-columns:58px 1fr 58px;min-height:88px}
+      .cuteFish{width:66px}
+      .startTagline{font-size:10px}
+      .startAquarium{height:96px;margin-top:3px}
+      .startSwimFish{width:82px}
+      .startPuffer{width:63px}
+      .startStats{gap:4px}
+      .startStat{font-size:8.5px;padding:6px 2px}
+      .startStat span{font-size:16px}
+      .startFeature{font-size:8.5px;padding:7px}
+      .startFeature b{font-size:10px}
+      .startPlayBtn{min-height:53px;font-size:19px}
+    }
+    @media (max-height:720px){
+      .startCard{max-height:calc(100dvh - 12px);padding-top:11px}
+      .startHero{min-height:76px}
+      .startAquarium{height:82px;margin:2px 0 7px}
+      .startStats{margin-bottom:6px}
+      .startFeatures{display:none}
+      .startSaveStatus{margin-bottom:6px}
+      .startPlayBtn{min-height:50px}
+    }
+
     .hidden{display:none!important}
     #toast{
       position:absolute;left:50%;top:25%;transform:translate(-50%,-50%);
@@ -418,28 +622,109 @@
     <button id="rescueBtn" class="actionBtn">🛟 กู้ตู้</button>
   </div>
 
-  <div id="startOverlay" class="overlay">
-    <div class="card center">
-      <div style="font-size:58px">🐠✨</div>
-      <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Event Soundscapes: แต่ละอีเวนต์มีเสียงบรรยากาศเฉพาะตลอดช่วงอีเวนต์</p>
-      <div class="tips">
-        <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
-        <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
-        <div class="tip">👾 แตะศัตรูเพื่อโจมตี</div>
-        <div class="tip">🦪 อัปเกรดตู้เพื่อรับโบนัสถาวร</div>
+  <div id="startOverlay" class="overlay startOverlay">
+    <div class="startCard">
+      <div class="startHero">
+        <svg class="cuteFish left" viewBox="0 0 120 90" aria-hidden="true">
+          <defs>
+            <linearGradient id="fishOrange" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ffe36e"/>
+              <stop offset="1" stop-color="#ff8d35"/>
+            </linearGradient>
+          </defs>
+          <path d="M27 45 4 24v42z" fill="#ff9b32" stroke="#d86622" stroke-width="4"/>
+          <ellipse cx="65" cy="45" rx="39" ry="29" fill="url(#fishOrange)" stroke="#f47627" stroke-width="4"/>
+          <path d="M57 20q8-17 22-6l-4 10z" fill="#ffc84a"/>
+          <path d="M57 69q8 16 22 5l-4-10z" fill="#ffbd43"/>
+          <circle cx="81" cy="37" r="9" fill="#fff"/>
+          <circle cx="83" cy="38" r="5" fill="#25334a"/>
+          <circle cx="85" cy="36" r="1.8" fill="#fff"/>
+          <path d="M80 52q8 8 15 0" fill="none" stroke="#7a361e" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="89" cy="49" r="4" fill="#ff887d" opacity=".65"/>
+          <path d="M43 34q7 11 0 22" fill="none" stroke="#fff2b0" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+
+        <div class="startBrand">
+          <div class="startBrandMark">AQUARIUM ADVENTURE</div>
+          <h1 class="startTitle">Aqua Pocket <span>Deluxe</span></h1>
+          <p class="startTagline">เลี้ยงปลาน่ารัก สะสมเหรียญ และปกป้องโลกใต้น้ำของคุณ</p>
+        </div>
+
+        <svg class="cuteFish right" viewBox="0 0 120 90" aria-hidden="true">
+          <defs>
+            <linearGradient id="fishPink" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ffb3d6"/>
+              <stop offset="1" stop-color="#ff668f"/>
+            </linearGradient>
+          </defs>
+          <path d="M93 45 116 23v44z" fill="#ff7fa6" stroke="#df4f79" stroke-width="4"/>
+          <ellipse cx="55" cy="45" rx="39" ry="29" fill="url(#fishPink)" stroke="#eb5b87" stroke-width="4"/>
+          <path d="M49 19q-7-16-20-6l4 11z" fill="#ff8fb6"/>
+          <path d="M48 69q-7 16-20 6l4-11z" fill="#ff7fa6"/>
+          <circle cx="39" cy="37" r="9" fill="#fff"/>
+          <circle cx="37" cy="38" r="5" fill="#25334a"/>
+          <circle cx="35" cy="36" r="1.8" fill="#fff"/>
+          <path d="M25 52q8 8 15 0" fill="none" stroke="#773147" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="31" cy="49" r="4" fill="#ffcad7" opacity=".78"/>
+          <path d="M73 33q-7 12 0 23" fill="none" stroke="#ffd5e5" stroke-width="5" stroke-linecap="round"/>
+        </svg>
       </div>
 
-      <div class="legend">
-        <div class="legendItem"><b>ปลา 5 สายพันธุ์</b> ปลาทอง ปลาการ์ตูน เทพา พองตัว และฉลามจิ๋ว มีความสามารถไม่เหมือนกัน</div>
-        <div class="legendItem"><b>ศัตรู 3 แบบ</b> ปลาเงา แมงกะพรุนผี และปูกรงเล็บ แต่ละแบบมีความเร็วและพลังต่างกัน</div>
+      <div class="startAquarium" aria-hidden="true">
+        <svg class="startSwimFish one" viewBox="0 0 130 85">
+          <path d="M28 43 4 23v40z" fill="#ff9b35"/>
+          <ellipse cx="72" cy="43" rx="42" ry="27" fill="#ffca49" stroke="#e78328" stroke-width="4"/>
+          <path d="M52 20q11-14 26-3" fill="#ffe172" stroke="#e78328" stroke-width="3"/>
+          <circle cx="91" cy="36" r="8" fill="#fff"/><circle cx="93" cy="37" r="4.5" fill="#1d3850"/>
+          <path d="M91 51q7 6 13 0" fill="none" stroke="#75401e" stroke-width="3" stroke-linecap="round"/>
+          <path d="M54 31q6 11 0 22M68 27q6 15 0 30" fill="none" stroke="#32578c" stroke-width="6"/>
+        </svg>
+
+        <svg class="startPuffer" viewBox="0 0 100 100">
+          <g fill="#ffcf58" stroke="#d98c31" stroke-width="3">
+            <path d="M50 8 55 24 45 24z"/><path d="M50 92 55 76 45 76z"/>
+            <path d="M8 50 24 55 24 45z"/><path d="M92 50 76 55 76 45z"/>
+            <path d="M20 20 31 32 25 37z"/><path d="M80 20 69 32 75 37z"/>
+            <path d="M20 80 31 68 25 63z"/><path d="M80 80 69 68 75 63z"/>
+          </g>
+          <circle cx="50" cy="50" r="33" fill="#ffd966" stroke="#e69a34" stroke-width="4"/>
+          <circle cx="61" cy="40" r="8" fill="#fff"/><circle cx="63" cy="41" r="4" fill="#23384b"/>
+          <circle cx="38" cy="52" r="3" fill="#c88731"/><circle cx="53" cy="61" r="3" fill="#c88731"/>
+          <path d="M60 57q6 6 12 0" fill="none" stroke="#7b4722" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+
+        <svg class="startSwimFish two" viewBox="0 0 130 85">
+          <path d="M102 43 126 23v40z" fill="#2f81db"/>
+          <ellipse cx="58" cy="43" rx="42" ry="27" fill="#57b8ff" stroke="#2677c4" stroke-width="4"/>
+          <path d="M76 20q-11-14-26-3" fill="#83d6ff" stroke="#2677c4" stroke-width="3"/>
+          <circle cx="39" cy="36" r="8" fill="#fff"/><circle cx="37" cy="37" r="4.5" fill="#1d3850"/>
+          <path d="M26 51q7 6 13 0" fill="none" stroke="#234d72" stroke-width="3" stroke-linecap="round"/>
+          <path d="M76 29q-6 12 0 25M62 26q-6 17 0 34" fill="none" stroke="#244d9e" stroke-width="6"/>
+        </svg>
       </div>
 
-      <button id="startBtn" class="primary">เริ่มเล่น / เล่นต่อ</button>
-      <button id="installBtn" class="installBtn">📲 ติดตั้งเกมเป็นแอป</button>
-      <small id="installNote" class="installNote">ติดตั้งแล้วจะมีไอคอนบนหน้าจอและเปิดเต็มจอเหมือนแอป</small>
-      <button id="startSettingsBtn" class="secondary">⚙️ ตั้งค่าเสียง</button>
-      <button id="newBtn" class="secondary">เริ่มใหม่ทั้งหมด</button>
+      <div class="startStats">
+        <div class="startStat"><span>🐟</span>ปลา 9 สายพันธุ์</div>
+        <div class="startStat"><span>🛡️</span>ผู้พิทักษ์ 4 แบบ</div>
+        <div class="startStat"><span>🌊</span>อีเวนต์พิเศษ</div>
+      </div>
+
+      <div class="startFeatures">
+        <div class="startFeature"><b>🎵 เสียงอีเวนต์เฉพาะ</b>แต่ละเหตุการณ์มีบรรยากาศเสียงแตกต่างกัน</div>
+        <div class="startFeature"><b>✨ บัฟถาวร</b>สะสมพลังพิเศษและเพิ่มราคาขายของปลา</div>
+      </div>
+
+      <div id="startSaveStatus" class="startSaveStatus">กำลังตรวจสอบข้อมูลบันทึก...</div>
+
+      <button id="startBtn" class="primary startPlayBtn">▶ เริ่มเล่น</button>
+
+      <div class="startActions">
+        <button id="startSettingsBtn" class="secondary">⚙️ ตั้งค่าเสียง</button>
+        <button id="newBtn" class="secondary">🔄 เริ่มเกมใหม่</button>
+      </div>
+
+      <button id="installBtn" class="installBtn startInstallBtn">📲 ติดตั้งเกมเป็นแอป</button>
+      <small id="installNote" class="installNote startInstallNote">ติดตั้งแล้วเปิดเต็มจอและมีไอคอนบนหน้าจอ</small>
     </div>
   </div>
 
@@ -4387,6 +4672,41 @@
   $("settingsOverlay").addEventListener("pointerdown",event=>{
     if(event.target===$("settingsOverlay")) closeAudioSettings();
   });
+
+
+  function updateStartScreen(){
+    const button=$("startBtn");
+    const status=$("startSaveStatus");
+    const newButton=$("newBtn");
+    if(!button||!status||!newButton) return;
+
+    try{
+      const raw=localStorage.getItem(SAVE_KEY);
+      if(!raw){
+        button.textContent="▶ เริ่มเล่น";
+        status.textContent="🌱 ยังไม่มีเซฟ — เริ่มตู้ปลาใหม่พร้อมปลาเริ่มต้น 2 ตัว";
+        newButton.classList.add("hidden");
+        return;
+      }
+
+      const saved=JSON.parse(raw);
+      const fishCount=Array.isArray(saved?.fish)?saved.fish.length:0;
+      const coins=Math.max(0,Math.floor(Number(saved?.coins)||0));
+      const guardians=Array.isArray(saved?.guardianTypes)
+        ? saved.guardianTypes.length
+        : Math.max(0,Number(saved?.guardianCount)||0);
+
+      button.textContent="▶ เล่นต่อ";
+      status.textContent=`💾 เซฟล่าสุด: ปลา ${fishCount} ตัว • เหรียญ ${coins.toLocaleString("th-TH")} • ผู้พิทักษ์ ${guardians}`;
+      newButton.classList.remove("hidden");
+    }catch(error){
+      button.textContent="▶ เริ่มเล่น";
+      status.textContent="🌱 พร้อมเริ่มตู้ปลาใหม่";
+      newButton.classList.remove("hidden");
+    }
+  }
+
+  updateStartScreen();
 
   $("startBtn").onclick=()=>{
     ensureAudio();
