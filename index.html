@@ -226,7 +226,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Permanent Buffs: บัฟอีเวนต์ติดตัวปลาถาวร สะสมได้ 4 ชนิด และเพิ่มราคาขาย</p>
+      <p>เวอร์ชัน Guardian Separation: ปลาองครักษ์กระจายตำแหน่งและเว้นระยะ ไม่กองรวมเป็นกระจุก</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -1133,24 +1133,44 @@
       if(c){let dx=c.x-s.x,dy=c.y-s.y,d=Math.hypot(dx,dy)||1;c.x-=dx/d*65*dt;c.y-=dy/d*65*dt; if(d<24)collectCoin(c);}
     }
 
-    for(const g of state.guardians){
+    const guardianTotal=Math.max(1,state.guardians.length);
+    for(let gi=0;gi<state.guardians.length;gi++){
+      const g=state.guardians[gi];
       const gt=g.typeData||GUARDIAN_TYPES[g.typeKey]||GUARDIAN_TYPES.sword;
       g.typeData=gt;
       g.wobble+=dt*(4.0+gt.speed*.3);
       g.attackTimer-=dt;
       g.target=nearest(state.enemies,g.x,g.y,Math.max(330,gt.range+90));
 
-      if(g.target){
-        const dx=g.target.x-g.x,dy=g.target.y-g.y,d=Math.hypot(dx,dy)||1;
-        const desired=Math.min(105,58+gt.range*.12);
-        if(d>desired){
-          g.vx+=(dx/d)*90*gt.speed*dt;
-          g.vy+=(dy/d)*75*gt.speed*dt;
-        }else{
-          g.vx+=(-dy/d)*24*gt.speed*dt;
-          g.vy+=(dx/d)*20*gt.speed*dt;
+      // แรงแยกฝูง: ผลักองครักษ์ที่อยู่ใกล้กันเกินไป
+      let separateX=0,separateY=0;
+      const personalSpace=62+(gt.body==="royalShark"?18:gt.body==="ray"?10:0);
+      for(let gj=0;gj<state.guardians.length;gj++){
+        if(gj===gi) continue;
+        const other=state.guardians[gj];
+        const sx=g.x-other.x,sy=g.y-other.y;
+        const sd=Math.hypot(sx,sy)||1;
+        if(sd<personalSpace){
+          const strength=(personalSpace-sd)/personalSpace;
+          separateX+=(sx/sd)*strength;
+          separateY+=(sy/sd)*strength;
         }
-        if(d<gt.range&&g.attackTimer<=0){
+      }
+      g.vx+=separateX*145*dt;
+      g.vy+=separateY*125*dt;
+
+      if(g.target){
+        // กระจายล้อมศัตรูคนละมุม แทนการพุ่งไปจุดเดียวกัน
+        const desired=Math.min(112,62+gt.range*.12);
+        const slotAngle=(gi/guardianTotal)*Math.PI*2+state.elapsed*.10;
+        const slotX=g.target.x+Math.cos(slotAngle)*desired;
+        const slotY=g.target.y+Math.sin(slotAngle)*desired*.62;
+        const dx=slotX-g.x,dy=slotY-g.y,d=Math.hypot(dx,dy)||1;
+        g.vx+=(dx/d)*92*gt.speed*dt;
+        g.vy+=(dy/d)*78*gt.speed*dt;
+
+        const enemyDistance=Math.hypot(g.target.x-g.x,g.target.y-g.y);
+        if(enemyDistance<gt.range&&g.attackTimer<=0){
           const damage=(gt.damage+state.pearlLevel*(.22+gt.damage*.025))*eventFx.guardianDamageMul;
           g.target.hp-=damage;
           state.guardShots.push({
@@ -1161,16 +1181,25 @@
           beep(460+gt.damage*18+Math.random()*70,.025,"triangle",.009);
         }
       }else{
-        const anchorX=W*.5+Math.sin(state.elapsed*.38+g.wobble)*W*.26;
-        const anchorY=tankTop+100+Math.sin(state.elapsed*.55+g.wobble*.7)*70;
+        // แต่ละตัวมีช่องลาดตระเวนของตัวเอง กระจายทั่วตู้
+        const columns=Math.min(4,guardianTotal);
+        const rows=Math.ceil(guardianTotal/columns);
+        const col=gi%columns;
+        const row=Math.floor(gi/columns);
+        const baseX=(col+1)*W/(columns+1);
+        const usableHeight=Math.max(100,tankBottom-tankTop-150);
+        const baseY=tankTop+80+(row+1)*usableHeight/(rows+1);
+        const phase=gi*1.73;
+        const anchorX=baseX+Math.sin(state.elapsed*.35+phase)*Math.min(46,W/(columns+1)*.24);
+        const anchorY=baseY+Math.cos(state.elapsed*.48+phase)*34;
         const dx=anchorX-g.x,dy=anchorY-g.y,d=Math.hypot(dx,dy)||1;
-        g.vx+=(dx/d)*34*gt.speed*dt;
-        g.vy+=(dy/d)*30*gt.speed*dt;
+        g.vx+=(dx/d)*38*gt.speed*dt;
+        g.vy+=(dy/d)*34*gt.speed*dt;
       }
 
-      g.vx*=Math.pow(.38,dt);
-      g.vy*=Math.pow(.38,dt);
-      const gs=Math.hypot(g.vx,g.vy),gmax=86*gt.speed;
+      g.vx*=Math.pow(.34,dt);
+      g.vy*=Math.pow(.34,dt);
+      const gs=Math.hypot(g.vx,g.vy),gmax=90*gt.speed;
       if(gs>gmax){g.vx=g.vx/gs*gmax;g.vy=g.vy/gs*gmax}
       g.x+=g.vx*dt;g.y+=g.vy*dt;
       if(Math.abs(g.vx)>2)g.dir=Math.sign(g.vx);
