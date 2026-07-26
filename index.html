@@ -253,9 +253,11 @@
   };
 
   const ENEMY_TYPES = [
-    {key:"shadow", name:"ปลาเงา", emoji:"👾", hpMul:1, speedMul:1, damageMul:1, rewardMul:1, tint:"#5e2b7d"},
-    {key:"jelly", name:"แมงกะพรุนผี", emoji:"🪼", hpMul:.82, speedMul:1.22, damageMul:.88, rewardMul:1.05, tint:"#7e53b8"},
-    {key:"crab", name:"ปูกรงเล็บ", emoji:"🦀", hpMul:1.28, speedMul:.86, damageMul:1.25, rewardMul:1.18, tint:"#7d3142"},
+    {key:"shadow", name:"ปลานักล่า", emoji:"🐟", hpMul:1.0, speedMul:1.02, damageMul:1.0, rewardMul:1.0, tint:"#ff6f96", minWave:1, weight:4, scale:1.0},
+    {key:"jelly", name:"แมงกะพรุนไฟ", emoji:"🪼", hpMul:.88, speedMul:1.18, damageMul:.92, rewardMul:1.08, tint:"#a58cff", minWave:2, weight:3, scale:.96},
+    {key:"crab", name:"ปูจู่โจม", emoji:"🦀", hpMul:1.32, speedMul:.88, damageMul:1.24, rewardMul:1.18, tint:"#ff9078", minWave:3, weight:3, scale:1.02},
+    {key:"squid", name:"หมึกจู่โจม", emoji:"🦑", hpMul:1.18, speedMul:1.08, damageMul:1.22, rewardMul:1.28, tint:"#a97dff", minWave:4, weight:2, scale:1.08},
+    {key:"sharkEnemy", name:"ฉลามล่าเหยื่อ", emoji:"🦈", hpMul:1.55, speedMul:1.12, damageMul:1.35, rewardMul:1.45, tint:"#8fdcff", minWave:6, weight:1, scale:1.16},
   ];
 
   const canvas = document.getElementById("game");
@@ -494,14 +496,21 @@
 
   function spawnEnemy(){
     const baseWave = Math.max(1,state.wave);
-    const et = ENEMY_TYPES[Math.floor(Math.random()*ENEMY_TYPES.length)];
+    const available = ENEMY_TYPES.filter(et => baseWave >= (et.minWave || 1));
+    const weightedPool = [];
+    available.forEach(et => {
+      const weight = Math.max(1, et.weight || 1);
+      for(let i=0;i<weight;i++) weightedPool.push(et);
+    });
+    const et = weightedPool[Math.floor(Math.random()*weightedPool.length)] || ENEMY_TYPES[0];
     const hp = Math.max(5, Math.floor((5+baseWave*1.55) * et.hpMul));
     state.enemies.push({
       key:et.key, type:et,
       x:Math.random()<.5?-55:W+55,y:tankTop+80+Math.random()*(tankBottom-tankTop-190),
       vx:Math.random()<.5?48:-48,hp,maxHp:hp,target:null,wobble:Math.random()*8,
       speed:(34+Math.min(50,baseWave*1.2))*et.speedMul,
-      damage:(34+Math.min(16,baseWave*.6))*et.damageMul
+      damage:(34+Math.min(16,baseWave*.6))*et.damageMul,
+      scale:et.scale || 1
     });
     state.wave++;
     state.nextEnemy=state.elapsed+Math.max(11,40-Math.min(28,baseWave*1.15));
@@ -782,17 +791,21 @@
     }
 
     for(let i=state.enemies.length-1;i>=0;i--){
-      const e=state.enemies[i]; e.wobble+=dt*3;
+      const e=state.enemies[i]; e.wobble+=dt*(e.key==="jelly"?4.4:e.key==="squid"?4.0:3);
       if(!e.target||!state.fish.includes(e.target))e.target=nearest(state.fish,e.x,e.y);
       if(e.target){
         const dx=e.target.x-e.x,dy=e.target.y-e.y,d=Math.hypot(dx,dy)||1;
-        e.x+=dx/d*e.speed*dt;e.y+=dy/d*e.speed*dt;e.vx=dx;
-        if(d<25+e.target.size*10){
+        e.x+=dx/d*e.speed*dt;
+        e.y+=dy/d*e.speed*dt;
+        if(e.key==="jelly") e.y += Math.sin(e.wobble*1.6)*10*dt;
+        if(e.key==="crab") e.y = Math.min(tankBottom-26, Math.max(tankTop+70, e.y));
+        e.vx=dx;
+        if(d<25+e.target.size*10+((e.scale||1)-1)*18){
           e.target.health-=e.damage*dt*(1-Math.min(.45,state.pearlLevel*.045));
         }
       }
       if(e.hp<=0){
-        dropCoin(e.x,e.y,Math.round((18+Math.floor(state.wave*2.1))*e.type.rewardMul), e.key==="jelly"?"gem":"coin");
+        dropCoin(e.x,e.y,Math.round((18+Math.floor(state.wave*2.1))*e.type.rewardMul), e.key==="jelly"||e.key==="squid"?"gem":"coin");
         state.enemies.splice(i,1); toast(`กำจัด${e.type.name}แล้ว!`); saveProgress();
       }
     }
@@ -1473,28 +1486,176 @@
   }
 
   function drawEnemy(e){
-    ctx.save(); ctx.translate(e.x,e.y); ctx.scale(Math.sign(e.vx)||1,1); ctx.rotate(Math.sin(e.wobble)*.06);
+    ctx.save();
+    const facing = Math.sign(e.vx)||1;
+    const pulse = 1+Math.sin(e.wobble*2.1)*0.03;
+    const scale = e.scale || 1;
+    ctx.translate(e.x,e.y);
+    ctx.scale(facing*scale*pulse, (scale/pulse));
+    ctx.rotate(Math.sin(e.wobble)*.05);
+
     if(e.key==="shadow"){
-      ctx.fillStyle="#522c78"; ctx.beginPath(); ctx.ellipse(0,0,38,22,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#2d164c"; ctx.beginPath(); ctx.moveTo(-30,0); ctx.lineTo(-58,-25); ctx.lineTo(-52,25); ctx.closePath(); ctx.fill();
-      ctx.fillStyle="#ff5d8f"; ctx.beginPath(); ctx.arc(18,-5,5,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.moveTo(22,8); ctx.lineTo(10,6); ctx.lineTo(18,15); ctx.fill();
+      const body=ctx.createLinearGradient(-34,-10,34,14);
+      body.addColorStop(0,"#a73e68");
+      body.addColorStop(.45,"#ff7ea6");
+      body.addColorStop(1,"#72385f");
+      ctx.fillStyle=body;
+      ctx.strokeStyle="#4f2342";
+      ctx.lineWidth=2.4;
+      ctx.beginPath();
+      ctx.moveTo(-28,0);
+      ctx.quadraticCurveTo(-4,-19,25,-13);
+      ctx.quadraticCurveTo(38,-5,36,5);
+      ctx.quadraticCurveTo(29,18,-2,17);
+      ctx.quadraticCurveTo(-22,14,-28,0);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle="#ff9bbb";
+      ctx.beginPath();
+      ctx.moveTo(-23,0); ctx.lineTo(-48,-18); ctx.lineTo(-42,-2); ctx.lineTo(-56,0); ctx.lineTo(-42,2); ctx.lineTo(-48,18); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle="rgba(255,255,255,.36)";
+      ctx.beginPath(); ctx.ellipse(2,-8,13,5,-.18,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(17,-4,5.2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#20243c"; ctx.beginPath(); ctx.arc(19,-4,2.5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#5a2746"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(25,4,7,.1,1.1); ctx.stroke();
+      ctx.fillStyle="#fff";
+      for(let i=0;i<3;i++){
+        ctx.beginPath();
+        ctx.moveTo(23+i*4,7); ctx.lineTo(25+i*4,11); ctx.lineTo(27+i*4,7); ctx.fill();
+      }
+
     }else if(e.key==="jelly"){
-      ctx.fillStyle="#8f73ff"; ctx.beginPath(); ctx.arc(0,-2,24,Math.PI,0); ctx.lineTo(24,10); ctx.quadraticCurveTo(0,20,-24,10); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle="#c7bbff"; ctx.lineWidth=3;
-      [-12,-4,4,12].forEach(x=>{ ctx.beginPath(); ctx.moveTo(x,10); ctx.quadraticCurveTo(x+4,20,x-2,32); ctx.stroke(); });
-      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(-8,-2,3,0,Math.PI*2); ctx.arc(8,-2,3,0,Math.PI*2); ctx.fill();
-    }else{
-      ctx.fillStyle="#bc4a5f"; ctx.beginPath(); ctx.arc(-12,0,14,0,Math.PI*2); ctx.arc(12,0,14,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(0,0,28,17,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle="#ff8e7c";
-      ctx.beginPath(); ctx.moveTo(-22,-4); ctx.lineTo(-42,-20); ctx.lineTo(-34,-2); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(22,-4); ctx.lineTo(42,-20); ctx.lineTo(34,-2); ctx.closePath(); ctx.fill();
-      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(-9,-2,3,0,Math.PI*2); ctx.arc(9,-2,3,0,Math.PI*2); ctx.fill();
+      const bell=ctx.createRadialGradient(-4,-17,3,0,-4,32);
+      bell.addColorStop(0,"rgba(255,255,255,.78)");
+      bell.addColorStop(.25,"rgba(214,206,255,.95)");
+      bell.addColorStop(.7,"rgba(145,109,255,.95)");
+      bell.addColorStop(1,"rgba(90,59,196,.98)");
+      ctx.fillStyle=bell;
+      ctx.strokeStyle="#d7caff";
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.arc(0,-2,24,Math.PI,0);
+      ctx.quadraticCurveTo(20,16,7,14);
+      ctx.quadraticCurveTo(0,20,-7,14);
+      ctx.quadraticCurveTo(-20,16,-24,-2);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.strokeStyle="rgba(222,212,255,.95)";
+      ctx.lineWidth=3;
+      [-12,-5,3,11].forEach((x,i)=>{
+        ctx.beginPath();
+        ctx.moveTo(x,10);
+        ctx.bezierCurveTo(x+5,18+Math.sin(e.wobble+i)*3,x-6,27,x-2,34);
+        ctx.stroke();
+      });
+      ctx.fillStyle="#fff";
+      ctx.beginPath(); ctx.arc(-7,-3,3.4,0,Math.PI*2); ctx.arc(7,-3,3.4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#352b63";
+      ctx.beginPath(); ctx.arc(-6,-3,1.5,0,Math.PI*2); ctx.arc(8,-3,1.5,0,Math.PI*2); ctx.fill();
+
+    }else if(e.key==="crab"){
+      const shell=ctx.createLinearGradient(-30,-10,30,18);
+      shell.addColorStop(0,"#ff8267");
+      shell.addColorStop(.45,"#ffb091");
+      shell.addColorStop(1,"#d6574d");
+      ctx.fillStyle=shell;
+      ctx.strokeStyle="#8b3a33";
+      ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.ellipse(0,0,26,18,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle="#f46b60";
+      [[-20,-3,-44,-18,-34,-2],[20,-3,44,-18,34,-2]].forEach(([a,b,c,d,e1,f1])=>{
+        ctx.beginPath(); ctx.moveTo(a,b); ctx.lineTo(c,d); ctx.lineTo(e1,f1); ctx.closePath(); ctx.fill(); ctx.stroke();
+      });
+      ctx.strokeStyle="#9f4c3e";
+      ctx.lineWidth=3;
+      [-16,-7,7,16].forEach(x=>{
+        ctx.beginPath(); ctx.moveTo(x,12); ctx.lineTo(x-9,24); ctx.stroke();
+      });
+      ctx.fillStyle="#fff";
+      ctx.beginPath(); ctx.arc(-8,-4,3.5,0,Math.PI*2); ctx.arc(8,-4,3.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#2a2640";
+      ctx.beginPath(); ctx.arc(-7,-4,1.6,0,Math.PI*2); ctx.arc(9,-4,1.6,0,Math.PI*2); ctx.fill();
+
+    }else if(e.key==="squid"){
+      const head=ctx.createLinearGradient(0,-30,0,26);
+      head.addColorStop(0,"#cda8ff");
+      head.addColorStop(.4,"#9d73ff");
+      head.addColorStop(1,"#6942cd");
+      ctx.fillStyle=head;
+      ctx.strokeStyle="#4b319c";
+      ctx.lineWidth=2.2;
+      ctx.beginPath();
+      ctx.moveTo(0,-30);
+      ctx.quadraticCurveTo(24,-18,22,8);
+      ctx.quadraticCurveTo(12,20,0,24);
+      ctx.quadraticCurveTo(-12,20,-22,8);
+      ctx.quadraticCurveTo(-24,-18,0,-30);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle="rgba(255,255,255,.35)";
+      ctx.beginPath(); ctx.ellipse(-4,-14,10,5,-.3,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#cdb8ff";
+      ctx.lineWidth=3;
+      [-14,-7,0,7,14].forEach((x,i)=>{
+        ctx.beginPath();
+        ctx.moveTo(x,18);
+        ctx.bezierCurveTo(x+2,28+Math.sin(e.wobble+i)*3,x-8,36,x-4,45);
+        ctx.stroke();
+      });
+      ctx.fillStyle="#fff";
+      ctx.beginPath(); ctx.arc(-6,-2,4.2,0,Math.PI*2); ctx.arc(6,-2,4.2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#2d245a";
+      ctx.beginPath(); ctx.arc(-5,-1,1.9,0,Math.PI*2); ctx.arc(7,-1,1.9,0,Math.PI*2); ctx.fill();
+
+    }else if(e.key==="sharkEnemy"){
+      const tail=ctx.createLinearGradient(-38,0,0,0);
+      tail.addColorStop(0,"#7aa8bf");
+      tail.addColorStop(1,"#b6d9e8");
+      ctx.fillStyle=tail;
+      ctx.strokeStyle="#355c73";
+      ctx.lineWidth=2.3;
+      ctx.beginPath();
+      ctx.moveTo(-8,0); ctx.lineTo(-35,-20); ctx.lineTo(-29,-5); ctx.lineTo(-42,0); ctx.lineTo(-29,5); ctx.lineTo(-35,20); ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      const body=ctx.createLinearGradient(-30,-14,32,15);
+      body.addColorStop(0,"#4b7b95");
+      body.addColorStop(.35,"#87b5c7");
+      body.addColorStop(.62,"#bfe0ec");
+      body.addColorStop(1,"#5f8ea5");
+      ctx.fillStyle=body;
+      ctx.beginPath();
+      ctx.moveTo(-28,0);
+      ctx.quadraticCurveTo(-6,-18,20,-14);
+      ctx.quadraticCurveTo(35,-8,37,2);
+      ctx.quadraticCurveTo(29,18,-4,16);
+      ctx.quadraticCurveTo(-22,12,-28,0);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle="#5f93aa";
+      ctx.beginPath(); ctx.moveTo(-2,-12); ctx.lineTo(7,-29); ctx.lineTo(17,-11); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-1,12); ctx.lineTo(16,23); ctx.lineTo(8,9); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle="rgba(240,252,255,.84)";
+      ctx.beginPath(); ctx.ellipse(10,7,19,7,-.08,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(22,-5,4.6,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#21384a"; ctx.beginPath(); ctx.arc(24,-5,2.2,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#355c73"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(26,4,7,.08,1); ctx.stroke();
+      ctx.fillStyle="#fff";
+      for(let i=0;i<4;i++){
+        ctx.beginPath();
+        ctx.moveTo(23+i*4,6); ctx.lineTo(25+i*4,10); ctx.lineTo(27+i*4,6); ctx.fill();
+      }
     }
     ctx.restore();
-    ctx.fillStyle="rgba(0,0,0,.5)"; drawRoundRect(e.x-34,e.y-34,68,7,4); ctx.fill();
-    ctx.fillStyle=e.key==="crab"?"#ff8b7a":e.key==="jelly"?"#9fd1ff":"#ff678c"; drawRoundRect(e.x-34,e.y-34,68*(e.hp/e.maxHp),7,4); ctx.fill();
+    const barW = 72*(e.scale||1)*0.98;
+    ctx.fillStyle="rgba(0,0,0,.5)"; drawRoundRect(e.x-barW/2,e.y-36*(e.scale||1),barW,7,4); ctx.fill();
+    ctx.fillStyle=e.type.tint || (e.key==="crab"?"#ff8b7a":e.key==="jelly"?"#9fd1ff":"#ff678c");
+    drawRoundRect(e.x-barW/2,e.y-36*(e.scale||1),barW*(e.hp/e.maxHp),7,4); ctx.fill();
   }
 
   function drawSnail(s){
