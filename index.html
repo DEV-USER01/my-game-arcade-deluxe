@@ -422,7 +422,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Lightweight Aura: ลดภาระออร่าให้เกมลื่นขึ้น โดยยังคงสีประจำบัฟ</p>
+      <p>เวอร์ชัน Buff Aura: บัฟถาวรของปลามีออร่าเรืองแสงรอบตัวชัดขึ้นตามชนิดอีเวนต์</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -3611,119 +3611,143 @@
     const buffs=fishPermanentBuffKeys(f);
     if(!buffs.length) return;
 
-    // ไม่วาดของตกแต่งให้ปลาที่อยู่นอกจอ
-    if(f.x<-70||f.x>W+70||f.y<tankTop-70||f.y>tankBottom+70) return;
-
     const activeKey=state.activeEvent&&buffs.includes(state.activeEvent.key)
       ? state.activeEvent.key
-      : buffs[Math.floor(state.elapsed/2.2)%buffs.length];
-    const pulse=.5+.5*Math.sin(state.elapsed*3+(f.statusPhase||0));
-    const radius=(24+3*pulse)*f.size;
-    const manyFish=state.fish.length>10;
+      : buffs[Math.floor(state.elapsed/1.4)%buffs.length];
+    const type=EVENT_TYPES[activeKey]||EVENT_TYPES[buffs[0]];
+    const pulse=.5+.5*Math.sin(state.elapsed*4+(f.statusPhase||0));
+    const radius=(25+5*pulse)*f.size;
+    const innerRadius=(10.5+2.2*pulse)*f.size;
 
-    let fillColor="rgba(143,245,235,.09)";
-    let ringA="#9ff7ed";
-    let ringB="#d8c8ff";
+    let glowCore="rgba(171,255,244,.36)";
+    let glowOuter="rgba(123,244,255,.06)";
+    let ringA="#abfff4";
+    let ringB="#d7c7ff";
     let spark="#ffffff";
 
     if(activeKey==="rainbow"){
-      fillColor="rgba(255,125,195,.08)";
-      ringA="#ff7fc5";
-      ringB="#73d9ff";
-      spark="#ffe889";
+      glowCore="rgba(255,126,195,.38)";
+      glowOuter="rgba(97,201,255,.08)";
+      ringA="#ff7bc0";
+      ringB="#68d8ff";
+      spark="#fff3a0";
     }else if(activeKey==="storm"){
-      fillColor="rgba(106,190,255,.08)";
-      ringA="#82d6ff";
-      ringB="#e4f7ff";
-      spark="#ffffff";
+      glowCore="rgba(139,216,255,.32)";
+      glowOuter="rgba(88,152,255,.08)";
+      ringA="#8bd8ff";
+      ringB="#d8f2ff";
+      spark="#f6fdff";
     }else if(activeKey==="gold"){
-      fillColor="rgba(255,214,80,.09)";
-      ringA="#ffdc64";
-      ringB="#fff2a3";
-      spark="#fff8cf";
+      glowCore="rgba(255,224,115,.34)";
+      glowOuter="rgba(255,201,62,.08)";
+      ringA="#ffe173";
+      ringB="#fff6a8";
+      spark="#fff7c9";
     }
 
     ctx.save();
     ctx.translate(f.x,f.y);
+    ctx.globalCompositeOperation="lighter";
+    ctx.shadowBlur=14+8*pulse;
+    ctx.shadowColor=ringA;
 
-    // ออร่าแบบสีเรียบ: เบากว่า gradient + shadowBlur มาก
-    ctx.globalAlpha=.72;
-    ctx.fillStyle=fillColor;
+    const aura=ctx.createRadialGradient(0,-1,innerRadius*.2,0,0,radius+12*f.size);
+    aura.addColorStop(0,glowCore);
+    aura.addColorStop(.45,glowOuter);
+    aura.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle=aura;
     ctx.beginPath();
-    ctx.ellipse(0,0,radius+4*f.size,radius*.70+3*f.size,0,0,Math.PI*2);
+    ctx.ellipse(0,0,radius+4*f.size,radius*.78+6*f.size,0,0,Math.PI*2);
     ctx.fill();
 
-    ctx.globalAlpha=.34+.16*pulse;
-    ctx.lineWidth=1.25+f.size*.18;
-    ctx.strokeStyle=ringA;
-    ctx.beginPath();
-    ctx.ellipse(0,0,radius,radius*.72,0,0,Math.PI*2);
-    ctx.stroke();
-
-    if(!manyFish){
-      ctx.globalAlpha=.25+.12*pulse;
-      ctx.strokeStyle=ringB;
-      ctx.beginPath();
-      ctx.ellipse(0,0,radius-4,radius*.58,0,0,Math.PI*2);
-      ctx.stroke();
-    }
+    ctx.globalAlpha=.38+.18*pulse;
+    ctx.lineWidth=1.5+f.size*.24;
 
     if(activeKey==="rainbow"){
-      ctx.globalAlpha=.55;
-      ctx.strokeStyle="#ffd568";
-      ctx.beginPath();ctx.arc(0,0,radius,.1,1.15);ctx.stroke();
-      ctx.strokeStyle="#75efb6";
-      ctx.beginPath();ctx.arc(0,0,radius,2.2,3.25);ctx.stroke();
-      ctx.strokeStyle="#9e8cff";
-      ctx.beginPath();ctx.arc(0,0,radius,4.25,5.3);ctx.stroke();
+      ["#ff6688","#ffd45d","#5ee7a4","#61c9ff","#b77cff"].forEach((c,i)=>{
+        ctx.strokeStyle=c;
+        ctx.beginPath();
+        ctx.arc(0,0,radius+i*.7,.55+i*.82,.55+i*.82+1.16);
+        ctx.stroke();
+      });
+      for(let i=0;i<5;i++){
+        const a=state.elapsed*1.8+i*(Math.PI*2/5);
+        ctx.fillStyle=["#ff88c0","#ffe37f","#85ffc9","#8ed8ff","#d0adff"][i];
+        ctx.beginPath();
+        ctx.arc(Math.cos(a)*(radius+2),Math.sin(a)*(radius-1),1.3+pulse*.9,0,Math.PI*2);
+        ctx.fill();
+      }
     }else if(activeKey==="storm"){
-      ctx.globalAlpha=.62;
+      ctx.strokeStyle=ringA;
+      ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
       ctx.strokeStyle=ringB;
-      ctx.lineWidth=1.6;
       ctx.beginPath();
-      ctx.moveTo(-3,-radius*.72);ctx.lineTo(2,-radius-5);
-      ctx.lineTo(0,-radius+1);ctx.lineTo(6,-radius-7);
+      ctx.moveTo(-6,-radius+1);ctx.lineTo(0,-radius-8);
+      ctx.lineTo(-2,-radius-2);ctx.lineTo(7,-radius-10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(radius*.18,-radius*.6);ctx.lineTo(radius*.34,-radius*.92);
+      ctx.lineTo(radius*.2,-radius*.72);ctx.lineTo(radius*.42,-radius*1.02);
       ctx.stroke();
     }else if(activeKey==="gold"){
-      ctx.globalAlpha=.70;
-      ctx.fillStyle=spark;
-      for(let i=0;i<(manyFish?1:3);i++){
-        const a=state.elapsed*.55+i*(Math.PI*2/3);
+      ctx.strokeStyle=ringA;ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
+      for(let i=0;i<4;i++){
+        const a=i*Math.PI*.5+state.elapsed*.35;
+        ctx.fillStyle=spark;
         ctx.beginPath();
-        ctx.arc(Math.cos(a)*radius,Math.sin(a)*radius*.72,1.2+pulse*.45,0,Math.PI*2);
+        ctx.arc(Math.cos(a)*radius,Math.sin(a)*radius,1.5+pulse,0,Math.PI*2);
         ctx.fill();
       }
-    }else if(!manyFish){
-      ctx.globalAlpha=.58;
-      ctx.fillStyle=spark;
-      for(let i=0;i<2;i++){
-        const a=state.elapsed*.45+i*Math.PI;
+      for(let i=0;i<3;i++){
+        const a=state.elapsed*.7+i*(Math.PI*2/3);
+        const x=Math.cos(a)*(radius*.72),y=Math.sin(a)*(radius*.58);
+        ctx.strokeStyle="#fff0ae";
+        ctx.lineWidth=1.1;
+        ctx.beginPath();ctx.moveTo(x-2.3,y);ctx.lineTo(x+2.3,y);ctx.moveTo(x,y-2.3);ctx.lineTo(x,y+2.3);ctx.stroke();
+      }
+    }else{
+      ctx.strokeStyle=ringA;
+      ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
+      ctx.strokeStyle=ringB;
+      ctx.beginPath();ctx.arc(0,0,radius-4,0,Math.PI*2);ctx.stroke();
+      for(let i=0;i<4;i++){
+        const a=state.elapsed*.95+i*(Math.PI*2/4);
+        ctx.fillStyle=spark;
         ctx.beginPath();
-        ctx.arc(Math.cos(a)*radius,Math.sin(a)*radius*.68,1.1+pulse*.35,0,Math.PI*2);
+        ctx.arc(Math.cos(a)*(radius-1),Math.sin(a)*(radius-5),1.1+pulse*.7,0,Math.PI*2);
         ctx.fill();
       }
+    }
+
+    // กลีบออร่านุ่ม ๆ รอบตัวปลา
+    for(let i=0;i<6;i++){
+      const a=state.elapsed*.45+i*(Math.PI*2/6)+(f.statusPhase||0)*.08;
+      const px=Math.cos(a)*(radius*.64);
+      const py=Math.sin(a)*(radius*.48);
+      ctx.fillStyle=glowCore.replace(/\.\d+\)$/,'.14)');
+      ctx.beginPath();
+      ctx.arc(px,py,3.2*f.size+1.1*pulse,0,Math.PI*2);
+      ctx.fill();
     }
     ctx.restore();
 
-    // ไอคอนบัฟคงไว้ แต่ลดขนาดเมื่อปลามีหลายตัว
-    const shownBuffs=manyFish?buffs.slice(0,2):buffs;
-    const iconSize=manyFish?7:8;
+    const iconSize=8;
     const gap=2;
-    const total=shownBuffs.length*iconSize+(shownBuffs.length-1)*gap;
+    const total=buffs.length*iconSize+(buffs.length-1)*gap;
     const startX=f.x-total/2+iconSize/2;
-    const y=f.y-22*f.size;
+    const y=f.y-23*f.size;
 
     ctx.save();
-    ctx.font=`${manyFish?8:9}px system-ui,sans-serif`;
-    ctx.textAlign="center";
-    ctx.textBaseline="middle";
-    shownBuffs.forEach((key,i)=>{
+    ctx.font="9px system-ui,sans-serif";
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    buffs.forEach((key,i)=>{
       const x=startX+i*(iconSize+gap);
-      ctx.fillStyle="rgba(3,25,43,.76)";
-      ctx.beginPath();
-      ctx.arc(x,y,manyFish?5.7:6.5,0,Math.PI*2);
-      ctx.fill();
-      ctx.fillText(EVENT_TYPES[key].icon,x,y+.2);
+      ctx.fillStyle="rgba(3,25,43,.82)";
+      ctx.strokeStyle="rgba(255,255,255,.38)";
+      ctx.lineWidth=.8;
+      ctx.beginPath();ctx.arc(x,y,6.7,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.fillText(EVENT_TYPES[key].icon,x,y+.3);
     });
     ctx.restore();
   }
