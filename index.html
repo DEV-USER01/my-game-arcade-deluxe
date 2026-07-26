@@ -228,7 +228,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Catfish Helper: เพิ่มปลาดุกผู้ช่วยราคา 2,000 เก็บอาหารตกพื้นและคืนเงิน</p>
+      <p>เวอร์ชัน Louder Audio: เพิ่มความดังของเอฟเฟกต์เสียงโดยยังคุมไม่ให้แตก</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -522,14 +522,14 @@
       audioCtx=new AudioClass();
 
       audioCompressor=audioCtx.createDynamicsCompressor();
-      audioCompressor.threshold.value=-20;
+      audioCompressor.threshold.value=-18;
       audioCompressor.knee.value=18;
       audioCompressor.ratio.value=5;
       audioCompressor.attack.value=.004;
       audioCompressor.release.value=.18;
 
       audioMaster=audioCtx.createGain();
-      audioMaster.gain.value=.72;
+      audioMaster.gain.value=.95;
       audioCompressor.connect(audioMaster);
       audioMaster.connect(audioCtx.destination);
 
@@ -560,7 +560,7 @@
     }
 
     amp.gain.setValueAtTime(.0001,now);
-    amp.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),now+Math.min(.018,dur*.25));
+    amp.gain.exponentialRampToValueAtTime(Math.max(.0002,gain*1.12),now+Math.min(.018,dur*.25));
     amp.gain.exponentialRampToValueAtTime(.0001,stop);
 
     osc.connect(amp);
@@ -590,7 +590,7 @@
     filter.frequency.setValueAtTime(Math.max(80,frequency),now);
     filter.Q.value=type==="bandpass"?1.1:.5;
 
-    amp.gain.setValueAtTime(Math.max(.0002,gain),now);
+    amp.gain.setValueAtTime(Math.max(.0002,gain*1.08),now);
     amp.gain.exponentialRampToValueAtTime(.0001,stop);
 
     source.connect(filter);
