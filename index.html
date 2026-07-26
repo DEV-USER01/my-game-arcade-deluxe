@@ -88,6 +88,38 @@
     #eventTime{font-size:10px;font-weight:950;white-space:nowrap}
     .eventTrack{height:3px;margin-top:4px;border-radius:999px;background:rgba(0,0,0,.26);overflow:hidden}
     #eventBar{height:100%;width:100%;border-radius:999px;background:rgba(255,255,255,.92)}
+    #bossWarning{
+      position:absolute;z-index:52;left:50%;top:calc(var(--safe-top) + 94px);
+      transform:translateX(-50%);width:min(92%,430px);
+      padding:9px 12px 7px;border-radius:15px;
+      border:2px solid rgba(255,210,210,.90);
+      background:linear-gradient(110deg,rgba(105,0,12,.97),rgba(210,20,35,.96),rgba(100,0,18,.97));
+      box-shadow:0 0 0 2px rgba(255,30,50,.20),0 8px 28px rgba(90,0,0,.48);
+      color:#fff8f4;pointer-events:none;overflow:hidden;
+      animation:bossWarningPulse .72s ease-in-out infinite alternate
+    }
+    #bossWarning.active{
+      background:linear-gradient(110deg,rgba(85,0,20,.98),rgba(245,35,45,.97),rgba(82,0,25,.98));
+      animation:bossWarningPulse .35s ease-in-out infinite alternate
+    }
+    #bossWarning::before{
+      content:"";position:absolute;inset:0;
+      background:linear-gradient(100deg,transparent 0 36%,rgba(255,255,255,.20) 48%,transparent 60%);
+      transform:translateX(-120%);animation:bossWarningScan 1.05s linear infinite
+    }
+    .bossWarningTop{position:relative;display:flex;align-items:center;gap:8px}
+    #bossWarningIcon{font-size:23px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.42))}
+    .bossWarningText{min-width:0;flex:1;line-height:1.08}
+    #bossWarningName{display:block;font-size:13px;font-weight:1000}
+    #bossWarningDesc{display:block;font-size:9px;font-weight:800;opacity:.95;margin-top:2px}
+    #bossWarningTime{font-size:12px;font-weight:1000;white-space:nowrap}
+    .bossWarningTrack{position:relative;height:4px;margin-top:6px;border-radius:999px;background:rgba(20,0,0,.45);overflow:hidden}
+    #bossWarningBar{height:100%;width:100%;border-radius:999px;background:linear-gradient(90deg,#fff0b7,#ffffff,#ffb5bd)}
+    @keyframes bossWarningPulse{
+      from{filter:brightness(.88);transform:translateX(-50%) scale(.992)}
+      to{filter:brightness(1.22);transform:translateX(-50%) scale(1.005)}
+    }
+    @keyframes bossWarningScan{to{transform:translateX(140%)}}
     #speciesStrip{
       position:absolute;left:8px;right:8px;bottom:82px;display:flex;gap:6px;overflow:auto;
       padding-bottom:4px;pointer-events:auto
@@ -291,6 +323,20 @@
     <div class="eventTrack"><div id="eventBar"></div></div>
   </div>
 
+  <div id="bossWarning" class="hidden">
+    <div class="bossWarningTop">
+      <span id="bossWarningIcon">🚨</span>
+      <div class="bossWarningText">
+        <strong id="bossWarningName">ระวังฝูงปลาไหลไฟฟ้า!</strong>
+        <small id="bossWarningDesc">กำลังพุ่งเข้ามาในแนวนอน</small>
+      </div>
+      <span id="bossWarningTime">9 วิ</span>
+    </div>
+    <div class="bossWarningTrack"><div id="bossWarningBar"></div></div>
+  </div>
+
+
+
 
   
 
@@ -308,7 +354,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Audio 500%: เพิ่มเสียงประกอบและเพลงพื้นหลังเป็นห้าเท่าจากระดับปกติ</p>
+      <p>เวอร์ชัน Electric Eel Boss: เพิ่มลาสบอสฝูงปลาไหลไฟฟ้า แถบเตือนแดง ไซเรน และตราไฟฟ้าลดราคาขาย</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -500,6 +546,9 @@
     fishMarket:$("fishMarket"), marketSummary:$("marketSummary"),
     eventBanner:$("eventBanner"), eventIcon:$("eventIcon"), eventName:$("eventName"),
     eventDesc:$("eventDesc"), eventTime:$("eventTime"), eventBar:$("eventBar"),
+    bossWarning:$("bossWarning"),bossWarningIcon:$("bossWarningIcon"),
+    bossWarningName:$("bossWarningName"),bossWarningDesc:$("bossWarningDesc"),
+    bossWarningTime:$("bossWarningTime"),bossWarningBar:$("bossWarningBar"),
     shopOverlay:$("shopOverlay"), startOverlay:$("startOverlay"), pauseOverlay:$("pauseOverlay")
   };
 
@@ -514,9 +563,11 @@
   const audioSettings=loadAudioSettings();
 
   const state = {
-    coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
+    coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[],
+    electricEels:[],shockFx:[],bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
     snail:null, catfishHelper:null, elapsed:0, nextEnemy:50, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
     activeEvent:null,nextEventAt:20,lastEventKey:null,eventUiSecond:-1,
+    eelRaid:null,nextEelRaidAt:110,eelRaidUiSecond:-1,
     soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
   };
@@ -1120,6 +1171,22 @@
         [440,587,698,880].forEach((note,i)=>playTone(note,.20,"sine",.017,i*.075,note*1.06,(i-1.5)*.1));
         playNoise(.28,.005,2500,"highpass",0);
       }
+    }else if(name==="siren"){
+      if(!soundReady(name,620)) return;
+      playTone(520,.62,"sawtooth",.020,0,860,-.28);
+      playTone(860,.62,"sawtooth",.018,.58,520,.28);
+      playTone(260,.58,"square",.008,.02,420,0);
+      playNoise(1.18,.007,950,"bandpass",0);
+    }else if(name==="eelRush"){
+      if(!soundReady(name,900)) return;
+      playNoise(.65,.018,520,"bandpass",0);
+      playTone(145,.72,"sawtooth",.026,0,72,-.25);
+      playTone(820,.35,"square",.012,.16,330,.25);
+    }else if(name==="electricShock"){
+      if(!soundReady(name,80)) return;
+      playNoise(.16,.018,2300,"highpass",0,(Math.random()-.5)*.8);
+      playTone(1280,.10,"square",.017,0,270,(Math.random()-.5)*.8);
+      playTone(210,.14,"sawtooth",.011,.025,95,0);
     }else if(name==="eventEnd"){
       playTone(660,.10,"sine",.014,0,590,-.1);
       playTone(440,.16,"sine",.012,.09,360,.1);
@@ -1176,6 +1243,10 @@
     return fx;
   }
 
+  function electricScarSaleMultiplier(f){
+    return f.electricScar?.5:1;
+  }
+
   function permanentBuffSaleMultiplier(f){
     let bonus=0;
     for(const key of fishPermanentBuffKeys(f)){
@@ -1193,6 +1264,126 @@
 
   function permanentBuffNames(f){
     return fishPermanentBuffKeys(f).map(key=>EVENT_TYPES[key].fishBuff).join(", ");
+  }
+
+  function scheduleNextEelRaid(first=false){
+    state.nextEelRaidAt=state.elapsed+(first?75+Math.random()*35:210+Math.random()*90);
+    state.eelRaidUiSecond=-1;
+  }
+
+  function updateEelRaidUI(force=false){
+    if(!ui.bossWarning) return;
+    const raid=state.eelRaid;
+    if(!raid){ui.bossWarning.className="hidden";return;}
+    const endTime=raid.phase==="warning"?raid.startsAt:raid.endsAt;
+    const total=raid.phase==="warning"?9:8;
+    const remaining=Math.max(0,endTime-state.elapsed);
+    const whole=Math.ceil(remaining);
+    if(!force&&whole===state.eelRaidUiSecond) return;
+    state.eelRaidUiSecond=whole;
+    ui.bossWarning.className=raid.phase==="active"?"active":"warning";
+    ui.bossWarningIcon.textContent=raid.phase==="active"?"⚡":"🚨";
+    ui.bossWarningName.textContent=raid.phase==="active"?"ฝูงปลาไหลไฟฟ้ากำลังพุ่งผ่าน!":"ระวัง! ฝูงปลาไหลไฟฟ้ากำลังมา";
+    ui.bossWarningDesc.textContent=raid.phase==="active"?"ปลาที่ถูกช็อตมีโอกาส 25% ติดตราไฟฟ้า":"เตรียมรับแรงช็อต • ราคาขายอาจเหลือครึ่งหนึ่ง";
+    ui.bossWarningTime.textContent=`${whole} วิ`;
+    ui.bossWarningBar.style.width=`${Math.max(0,Math.min(100,remaining/total*100))}%`;
+  }
+
+  function beginEelRaidWarning(){
+    state.eelRaid={
+      phase:"warning",warningStartedAt:state.elapsed,startsAt:state.elapsed+9,endsAt:0,
+      nextSirenAt:state.elapsed,direction:Math.random()<.5?1:-1,
+      shockedCount:0,scarredCount:0,checkedFish:new Set()
+    };
+    state.eelRaidUiSecond=-1;
+    updateEelRaidUI(true);
+    toast("🚨 ระวัง! ฝูงปลาไหลไฟฟ้ากำลังมา");
+    sfx("siren");
+  }
+
+  function spawnElectricEelSchool(){
+    const raid=state.eelRaid;if(!raid)return;
+    state.electricEels.length=0;
+    const count=Math.min(14,8+Math.floor(Math.max(1,state.wave)/80));
+    const direction=raid.direction;
+    const targets=state.fish.slice().sort(()=>Math.random()-.5);
+    for(let i=0;i<count;i++){
+      const target=targets.length?targets[i%targets.length]:null;
+      const laneY=target
+        ? Math.max(tankTop+62,Math.min(tankBottom-58,target.y+(Math.random()-.5)*42))
+        : tankTop+70+(i+.5)*(tankBottom-tankTop-140)/count;
+      state.electricEels.push({
+        x:direction>0?-115-i*48:W+115+i*48,y:laneY,dir:direction,
+        speed:220+Math.random()*65,scale:.82+Math.random()*.22,
+        wobble:Math.random()*10,launchAt:state.elapsed+i*.18,
+        target,hasShocked:false
+      });
+    }
+  }
+
+  function startEelRaid(){
+    const raid=state.eelRaid;if(!raid)return;
+    raid.phase="active";raid.startedAt=state.elapsed;raid.endsAt=state.elapsed+8;
+    state.eelRaidUiSecond=-1;
+    spawnElectricEelSchool();updateEelRaidUI(true);
+    toast("⚡ ฝูงปลาไหลไฟฟ้าพุ่งเข้ามาแล้ว!");sfx("eelRush");
+  }
+
+  function shockFishFromEel(eel,fish){
+    const raid=state.eelRaid;
+    if(!raid||!fish||!state.fish.includes(fish))return;
+    fish.stunnedUntil=Math.max(fish.stunnedUntil||0,state.elapsed+1.8);
+    fish.shockFlashUntil=Math.max(fish.shockFlashUntil||0,state.elapsed+.72);
+    state.shockFx.push({x1:eel.x,y1:eel.y,x2:fish.x,y2:fish.y,life:.48,maxLife:.48,seed:Math.random()*99});
+    raid.shockedCount++;sfx("electricShock");
+    if(!raid.checkedFish.has(fish)){
+      raid.checkedFish.add(fish);
+      if(!fish.electricScar&&Math.random()<.25){
+        fish.electricScar=true;raid.scarredCount++;
+        toast(`⚡ ${fish.typeData.name} ติดตราไฟฟ้า!\nราคาขายเหลือ 50%`);
+      }
+    }
+  }
+
+  function finishEelRaid(){
+    const raid=state.eelRaid;if(!raid)return;
+    const shocked=raid.shockedCount,scarred=raid.scarredCount;
+    state.electricEels.length=0;state.eelRaid=null;state.eelRaidUiSecond=-1;
+    updateEelRaidUI(true);scheduleNextEelRaid(false);
+    toast(`⚡ ฝูงปลาไหลผ่านไปแล้ว\nช็อต ${shocked} ครั้ง • ติดตราไฟฟ้า ${scarred} ตัว`);
+    sfx("eventEnd");updateUI();saveProgress();
+  }
+
+  function updateEelRaidSystem(dt){
+    for(let i=state.shockFx.length-1;i>=0;i--){
+      state.shockFx[i].life-=dt;
+      if(state.shockFx[i].life<=0)state.shockFx.splice(i,1);
+    }
+    const raid=state.eelRaid;
+    if(!raid){
+      if(state.elapsed>=state.nextEelRaidAt&&!state.activeEvent&&state.enemies.length===0&&state.fish.length>0)beginEelRaidWarning();
+      return;
+    }
+    if(raid.phase==="warning"){
+      if(state.elapsed>=raid.nextSirenAt){sfx("siren");raid.nextSirenAt=state.elapsed+1.18;}
+      if(state.elapsed>=raid.startsAt)startEelRaid();else updateEelRaidUI(false);
+      return;
+    }
+    for(let i=state.electricEels.length-1;i>=0;i--){
+      const eel=state.electricEels[i];
+      if(state.elapsed<eel.launchAt)continue;
+      eel.wobble+=dt*7.2;
+      if(eel.target&&state.fish.includes(eel.target))eel.y+=(eel.target.y-eel.y)*Math.min(1,dt*1.35);
+      const previousX=eel.x;eel.x+=eel.dir*eel.speed*dt;
+      if(!eel.hasShocked&&eel.target&&state.fish.includes(eel.target)){
+        const targetX=eel.target.x;
+        const crossed=eel.dir>0?previousX<targetX&&eel.x>=targetX:previousX>targetX&&eel.x<=targetX;
+        if(crossed){eel.hasShocked=true;shockFishFromEel(eel,eel.target);}
+      }
+      if((eel.dir>0&&eel.x>W+130)||(eel.dir<0&&eel.x<-130))state.electricEels.splice(i,1);
+    }
+    updateEelRaidUI(false);
+    if((state.elapsed>=raid.endsAt&&state.electricEels.length===0)||state.elapsed>=raid.endsAt+2)finishEelRaid();
   }
 
   function currentEventEffects(){return state.activeEvent?state.activeEvent.type:NO_EVENT_EFFECTS;}
@@ -1226,7 +1417,14 @@
     state.guardians.forEach(g=>{g.eventBuff=null;g.eventBuffUntil=0;});
     state.activeEvent=null;scheduleNextEvent(false);updateEventUI(true);toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);sfx("eventEnd");updateUI();
   }
-  function updateEventSystem(){if(state.activeEvent){if(state.elapsed>=state.activeEvent.endsAt)endActiveEvent();else updateEventUI(false);}else if(state.elapsed>=state.nextEventAt)startRandomEvent();}
+  function updateEventSystem(){
+    if(state.activeEvent){
+      if(state.elapsed>=state.activeEvent.endsAt)endActiveEvent();
+      else updateEventUI(false);
+    }else if(!state.eelRaid&&state.elapsed>=state.nextEventAt){
+      startRandomEvent();
+    }
+  }
 
   function randomType(){
     const r = Math.random();
@@ -1243,8 +1441,10 @@
 
   function reset(loadSaved=false){
     state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];state.guardians=[];state.guardShots=[];
+    state.electricEels=[];state.shockFx=[];
     state.snail=null;state.catfishHelper=null;state.elapsed=0;state.nextEnemy=50;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
     state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
+    state.eelRaid=null;state.eelRaidUiSecond=-1;scheduleNextEelRaid(true);
     state.soldCount=0;state.salesCoins=0;
     state.selectedType="goldfish";
     if(loadSaved && loadProgress()){
@@ -1268,7 +1468,8 @@
         fish:state.fish.slice(0,60).map(f=>({
           type:f.type, growth:f.growth, health:Math.max(20,Math.round(f.health)),
           hunger:Math.min(98,f.hunger), hueShift:f.hueShift,
-          permanentBuffs:fishPermanentBuffKeys(f)
+          permanentBuffs:fishPermanentBuffKeys(f),
+          electricScar:!!f.electricScar
         }))
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
@@ -1295,7 +1496,9 @@
         refunds:Math.max(0,Number(data.catfishRefunds)||0)
       } : null;
       state.elapsed = 0; state.nextEnemy = 45; state.foods=[]; state.coinsDrop=[]; state.enemies=[]; state.guardians=[]; state.guardShots=[];
+      state.electricEels=[];state.shockFx=[];
       state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
+      state.eelRaid=null;state.eelRaidUiSecond=-1;scheduleNextEelRaid(true);
       state.fish=[];
       if(data.fish.length===0) data.fish.push({type:"goldfish"});
       data.fish.slice(0,60).forEach((saved,i)=>{
@@ -1311,6 +1514,9 @@
         f.permanentBuffs=Array.isArray(saved.permanentBuffs)
           ? [...new Set(saved.permanentBuffs.filter(key=>EVENT_TYPES[key]))].slice(0,4)
           : [];
+        f.electricScar=!!saved.electricScar;
+        f.stunnedUntil=0;
+        f.shockFlashUntil=0;
       });
       const rawGuardianTypes=Array.isArray(data.guardianTypes)
         ? data.guardianTypes
@@ -1344,6 +1550,7 @@
       hueBase,hueShift:(Math.random()-.5)*10,wobble:Math.random()*10,baseSize:.8+.06*Math.random(),size:.82,
       temperament:.85+Math.random()*.35,statusPhase:Math.random()*9,
       permanentBuffs:state.activeEvent?[state.activeEvent.key]:[],
+      electricScar:false,stunnedUntil:0,shockFlashUntil:0,
       eventBuff:state.activeEvent?.key||null,eventBuffUntil:state.activeEvent?.endsAt||0
     });
   }
@@ -1374,11 +1581,13 @@
   function getFishStatus(f){
     const threat=nearest(state.enemies,f.x,f.y,145);
     const hpRatio=fishHealthRatio(f);
+    if(state.elapsed<(f.stunnedUntil||0)) return {emoji:"⚡",label:"ถูกช็อต",level:3};
     if(hpRatio<.35) return {emoji:"🤕",label:"บาดเจ็บ",level:3};
     if(f.hunger>105) return {emoji:"😵",label:"หิวมาก",level:3};
     if(threat) return {emoji:"😨",label:"กลัวศัตรู",level:3};
     if(hpRatio<.72) return {emoji:"💔",label:"สุขภาพลด",level:2};
     if(f.hunger>72) return {emoji:"🍤",label:"หิว",level:2};
+    if(f.electricScar) return {emoji:"⚠️",label:"ตราไฟฟ้า",level:2};
     if(f.size>=1.55) return {emoji:"⭐",label:"โตเต็มวัย",level:1};
     if(hpRatio>.92&&f.hunger<45) return {emoji:"😊",label:"มีความสุข",level:1};
     return {emoji:"💙",label:"ปกติ",level:0};
@@ -1468,7 +1677,9 @@
     const tankBonus=1+Math.min(.35,state.pearlLevel*.025);
     const saleBase=type.sellBase||type.price;
     const buffMultiplier=permanentBuffSaleMultiplier(f);
-    const raw=saleBase*(.60+maturity*1.60)*healthFactor*hungerFactor*tankBonus*buffMultiplier;
+    const electricMultiplier=electricScarSaleMultiplier(f);
+    const raw=saleBase*(.60+maturity*1.60)*healthFactor*hungerFactor*tankBonus
+      *buffMultiplier*electricMultiplier;
     return Math.max(25,Math.round(raw));
   }
 
@@ -1490,7 +1701,10 @@
     const buffText=buffCount
       ? `\nบัฟถาวร ${permanentBuffIcons(fish)} ${buffCount} ชนิด • โบนัสขาย +${buffBonus}%`
       : "";
-    const ok=window.confirm(`ขาย${type.name} (${maturity}) ราคา ${value.toLocaleString("th-TH")} เหรียญใช่ไหม?${buffText}`);
+    const electricText=fish.electricScar
+      ? "\n⚡ ตราไฟฟ้า: ราคาขายเหลือ 50%"
+      : "";
+    const ok=window.confirm(`ขาย${type.name} (${maturity}) ราคา ${value.toLocaleString("th-TH")} เหรียญใช่ไหม?${buffText}${electricText}`);
     if(!ok) return;
 
     const index=state.fish.indexOf(fish);
@@ -1518,7 +1732,7 @@
 
   function renderFishMarket(){
     ui.fishMarket.innerHTML="";
-    ui.marketSummary.innerHTML=`ขายแล้ว <b>${state.soldCount.toLocaleString("th-TH")}</b> ตัว • รายได้สะสม <span class="saleValue">${Math.floor(state.salesCoins).toLocaleString("th-TH")} 🪙</span><br>ราคาขายขึ้นตามขนาด สุขภาพ ระดับตู้ และบัฟถาวร • สะสมบัฟอีเวนต์เพื่อขายปลาได้แพงขึ้น`;
+    ui.marketSummary.innerHTML=`ขายแล้ว <b>${state.soldCount.toLocaleString("th-TH")}</b> ตัว • รายได้สะสม <span class="saleValue">${Math.floor(state.salesCoins).toLocaleString("th-TH")} 🪙</span><br>ราคาขายขึ้นตามขนาด สุขภาพ ระดับตู้ และบัฟถาวร • ⚡ ตราไฟฟ้าทำให้ราคาขายเหลือครึ่งหนึ่ง`;
 
     Object.values(FISH_TYPES).forEach(type=>{
       const owned=state.fish.filter(f=>f.type===type.key);
@@ -1535,6 +1749,9 @@
         ? `ตัวที่ราคาดีที่สุด: ${stage} • เลือด ${Math.round(best.health)}/${best.maxHealth||best.typeData?.maxHealth||100}`
           + (fishPermanentBuffKeys(best).length
             ? `<br>บัฟถาวร ${permanentBuffIcons(best)} • โบนัสขาย +${Math.round((permanentBuffSaleMultiplier(best)-1)*100)}%`
+            : "")
+          + (best.electricScar
+            ? `<br>⚡ ตราไฟฟ้า • ราคาขายเหลือ 50%`
             : "")
         : "ซื้อหรือเลี้ยงปลาชนิดนี้ก่อน"}</small></div>`;
 
@@ -1754,7 +1971,10 @@
   }
 
   function update(dt){
-    state.elapsed+=dt;updateEventSystem();const eventFx=currentEventEffects();
+    state.elapsed+=dt;
+    updateEelRaidSystem(dt);
+    updateEventSystem();
+    const eventFx=currentEventEffects();
     state.rescueCooldown=Math.max(0,state.rescueCooldown-dt);
 
     for(const b of state.bubbles){
@@ -1770,13 +1990,16 @@
     for(let i=state.fish.length-1;i>=0;i--){
       const f=state.fish[i], t=f.typeData;
       const permanentFx=permanentFishEffects(f);
+      const stunned=state.elapsed<(f.stunnedUntil||0);
+      const shockSpeedMul=stunned?.12:1;
+      if(stunned){f.vx*=Math.pow(.08,dt);f.vy*=Math.pow(.08,dt);}
       f.hunger+=dt*(1.45+f.size*.25)*t.hungerMul*Math.max(.55,1-state.pearlLevel*.035)*eventFx.hungerMul*permanentFx.hungerMul;
       f.wobble+=dt*(3.5+t.speed*.7);
       const target=nearest(state.foods,f.x,f.y,240);
       if(target&&(f.hunger>22||f.health<(f.maxHealth||t.maxHealth||100)*.92)){
         let dx=target.x-f.x,dy=target.y-f.y,d=Math.hypot(dx,dy)||1;
-        f.vx+=(dx/d)*95*t.speed*eventFx.speedMul*permanentFx.speedMul*dt;
-        f.vy+=(dy/d)*85*t.speed*eventFx.speedMul*permanentFx.speedMul*dt;
+        f.vx+=(dx/d)*95*t.speed*eventFx.speedMul*permanentFx.speedMul*shockSpeedMul*dt;
+        f.vy+=(dy/d)*85*t.speed*eventFx.speedMul*permanentFx.speedMul*shockSpeedMul*dt;
         if(d<18+f.size*8){
           const idx=state.foods.indexOf(target);if(idx>=0)state.foods.splice(idx,1);
           f.hunger=Math.max(0,f.hunger-(38+state.foodLevel*7));
@@ -1788,11 +2011,11 @@
           sfx("eat",f.size);
         }
       } else {
-        f.vx+=(Math.random()-.5)*28*dt*t.speed*eventFx.speedMul*permanentFx.speedMul;
-        f.vy+=(Math.random()-.5)*18*dt*t.speed*eventFx.speedMul*permanentFx.speedMul;
+        f.vx+=(Math.random()-.5)*28*dt*t.speed*eventFx.speedMul*permanentFx.speedMul*shockSpeedMul;
+        f.vy+=(Math.random()-.5)*18*dt*t.speed*eventFx.speedMul*permanentFx.speedMul*shockSpeedMul;
       }
       const speed=Math.hypot(f.vx,f.vy);
-      const max=(42+f.size*22)*t.speed*eventFx.speedMul*permanentFx.speedMul;
+      const max=(42+f.size*22)*t.speed*eventFx.speedMul*permanentFx.speedMul*shockSpeedMul;
       if(speed>max){f.vx=f.vx/speed*max;f.vy=f.vy/speed*max}
       f.x+=f.vx*dt;f.y+=f.vy*dt; if(Math.abs(f.vx)>3)f.dir=Math.sign(f.vx);
       const pad=26+f.size*13;
@@ -1988,7 +2211,7 @@
       }
     }
 
-    if(state.elapsed>=state.nextEnemy&&state.enemies.length===0)spawnEnemy();
+    if(state.elapsed>=state.nextEnemy&&state.enemies.length===0&&!state.eelRaid)spawnEnemy();
     if(state.fish.length===0) rescueTank(true);
   }
 
@@ -2238,6 +2461,29 @@
     depthFog.addColorStop(1,"rgba(0,35,52,.15)");
     ctx.fillStyle=depthFog;
     ctx.fillRect(0,tankTop,W,tankBottom-tankTop);
+  }
+
+  function drawEelRaidAtmosphere(){
+    const raid=state.eelRaid;if(!raid)return;
+    const pulse=.5+.5*Math.sin(state.elapsed*(raid.phase==="warning"?9:15));
+    const top=tankTop,height=Math.max(0,tankBottom-tankTop);
+    ctx.save();
+    ctx.fillStyle=raid.phase==="warning"?`rgba(255,0,25,${.055+.085*pulse})`:`rgba(255,0,35,${.085+.07*pulse})`;
+    ctx.fillRect(0,top,W,height);
+    const edge=ctx.createLinearGradient(0,0,W,0);
+    edge.addColorStop(0,`rgba(255,20,40,${.34*pulse})`);edge.addColorStop(.16,"rgba(255,0,0,0)");edge.addColorStop(.84,"rgba(255,0,0,0)");edge.addColorStop(1,`rgba(255,20,40,${.34*pulse})`);
+    ctx.fillStyle=edge;ctx.fillRect(0,top,W,height);
+    ctx.strokeStyle=`rgba(255,105,120,${.18+.18*pulse})`;ctx.lineWidth=2;
+    if(raid.phase==="warning"){
+      const scanY=top+((state.elapsed*165)%Math.max(1,height));ctx.beginPath();ctx.moveTo(0,scanY);ctx.lineTo(W,scanY);ctx.stroke();
+    }else{
+      const dir=raid.direction||1;
+      for(let i=0;i<16;i++){
+        const x=dir>0?((i*71+state.elapsed*360)%(W+160))-80:W-(((i*71+state.elapsed*360)%(W+160))-80);
+        const y=top+35+(i*83)%Math.max(80,height-70);ctx.beginPath();ctx.moveTo(x-dir*44,y);ctx.lineTo(x,y);ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   function drawEventAtmosphere(){
@@ -3020,6 +3266,7 @@
     ctx.restore();
 
     drawFishEventBuff(f);
+    drawElectricScar(f);
     const maxHealth=f.maxHealth||t.maxHealth||100;
     const hpRatio=Math.max(0,Math.min(1,f.health/maxHealth));
     if(hpRatio<.92){
@@ -3120,6 +3367,47 @@
       ctx.fillText(EVENT_TYPES[key].icon,x,y+.3);
     });
     ctx.restore();
+  }
+
+  function drawElectricEel(eel){
+    if(state.elapsed<eel.launchAt)return;
+    const wave=Math.sin(eel.wobble)*5;
+    ctx.save();ctx.translate(eel.x,eel.y);ctx.scale(eel.dir*eel.scale,eel.scale);
+    ctx.shadowColor="#8af7ff";ctx.shadowBlur=15;ctx.strokeStyle="rgba(155,250,255,.45)";ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(-48,0);ctx.bezierCurveTo(-28,-14+wave,-8,14-wave,12,0);ctx.bezierCurveTo(30,-11-wave,45,8+wave,54,0);ctx.stroke();
+    const body=ctx.createLinearGradient(-50,-8,55,9);body.addColorStop(0,"#273c4e");body.addColorStop(.22,"#3e7482");body.addColorStop(.52,"#67b7a7");body.addColorStop(.78,"#d7d94f");body.addColorStop(1,"#887f22");
+    ctx.strokeStyle=body;ctx.lineWidth=12;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(-49,0);ctx.bezierCurveTo(-29,-13+wave,-7,13-wave,13,0);ctx.bezierCurveTo(30,-10-wave,43,7+wave,51,0);ctx.stroke();
+    ctx.shadowBlur=0;ctx.strokeStyle="rgba(235,255,184,.62)";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-43,3);ctx.bezierCurveTo(-25,-7+wave,-6,15-wave,15,3);ctx.bezierCurveTo(31,-6-wave,42,9+wave,49,3);ctx.stroke();
+    const head=ctx.createRadialGradient(43,-5,2,45,0,15);head.addColorStop(0,"#f4ef7a");head.addColorStop(.55,"#b8b544");head.addColorStop(1,"#5d612e");
+    ctx.fillStyle=head;ctx.strokeStyle="#333d35";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(48,0,15,10,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(53,-3,3.2,0,Math.PI*2);ctx.fill();ctx.fillStyle="#14252c";ctx.beginPath();ctx.arc(54,-3,1.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="#39412f";ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(57,3,4,.1,.95);ctx.stroke();
+    ctx.strokeStyle="#fff48a";ctx.lineWidth=2.2;
+    for(let i=0;i<4;i++){const x=-28+i*18;ctx.beginPath();ctx.moveTo(x,-5);ctx.lineTo(x+5,0);ctx.lineTo(x+1,5);ctx.lineTo(x+9,1);ctx.stroke();}
+    ctx.strokeStyle="#bafaff";ctx.lineWidth=1.4;
+    for(let i=0;i<3;i++){const x=-32+i*34,y=-14+(i%2)*27;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+5,y-4);ctx.lineTo(x+3,y+2);ctx.lineTo(x+9,y-2);ctx.stroke();}
+    ctx.restore();
+  }
+
+  function drawShockFx(fx){
+    const alpha=Math.max(0,fx.life/fx.maxLife);ctx.save();ctx.lineCap="round";
+    for(let layer=0;layer<3;layer++){
+      ctx.strokeStyle=layer===0?"#fff":layer===1?"#74edff":"#9d73ff";ctx.lineWidth=layer===0?2.2:layer===1?4.5:7.5;ctx.globalAlpha=alpha*(layer===0?1:layer===1?.65:.25);ctx.beginPath();
+      const segments=7;
+      for(let i=0;i<=segments;i++){const t=i/segments,x=fx.x1+(fx.x2-fx.x1)*t,y=fx.y1+(fx.y2-fx.y1)*t,j=i===0||i===segments?0:Math.sin(fx.seed+i*8.7+state.elapsed*45)*9;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y+j);}
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawElectricScar(f){
+    if(!f.electricScar&&state.elapsed>=(f.shockFlashUntil||0))return;
+    const flashing=state.elapsed<(f.shockFlashUntil||0),pulse=.5+.5*Math.sin(state.elapsed*(flashing?24:5)+(f.statusPhase||0)),radius=(26+5*pulse)*f.size;
+    ctx.save();ctx.translate(f.x,f.y);ctx.strokeStyle=flashing?"#e9ffff":"#ff536c";ctx.lineWidth=flashing?3:1.8;ctx.globalAlpha=flashing?.85:.28+.18*pulse;
+    for(let i=0;i<3;i++){const start=i*Math.PI*2/3+state.elapsed*.7;ctx.beginPath();ctx.arc(0,0,radius+i*2,start,start+.82);ctx.stroke();}
+    if(flashing){ctx.strokeStyle="#72efff";ctx.lineWidth=2;for(let i=0;i<4;i++){const a=i*Math.PI*.5+state.elapsed*3,x=Math.cos(a)*radius,y=Math.sin(a)*radius;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a+.5)*7,y+Math.sin(a+.5)*7);ctx.lineTo(x+Math.cos(a-.5)*12,y+Math.sin(a-.5)*12);ctx.stroke();}}
+    ctx.restore();
+    if(f.electricScar){const x=f.x+27*f.size,y=f.y-23*f.size;ctx.save();ctx.fillStyle="rgba(82,0,20,.88)";ctx.strokeStyle="#ff9aa8";ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,7.6,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.font="10px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("⚡",x,y+.3);ctx.restore();}
   }
 
   function drawGuardian(g){
@@ -3703,7 +3991,7 @@
   }
 
   function draw(){
-    drawBackground();drawEventAtmosphere();
+    drawBackground();drawEelRaidAtmosphere();drawEventAtmosphere();
     for(const f of state.foods) drawFood(f);
     for(const c of state.coinsDrop) drawCoin(c);
     if(state.snail) drawSnail(state.snail);
@@ -3712,6 +4000,8 @@
     state.guardians.forEach(drawGuardian);
     state.guardShots.forEach(drawGuardShot);
     state.enemies.forEach(drawEnemy);
+    state.electricEels.forEach(drawElectricEel);
+    state.shockFx.forEach(drawShockFx);
   }
 
   function loop(t){
@@ -3750,8 +4040,9 @@
         ? `\n${permanentBuffIcons(fish)} บัฟถาวร ${buffCount}/4: ${permanentBuffNames(fish)}
 💰 โบนัสราคาขาย +${Math.round((permanentBuffSaleMultiplier(fish)-1)*100)}%`
         : "\nยังไม่มีบัฟถาวร";
+      const electricLine=fish.electricScar?"\n⚡ ตราไฟฟ้า: ราคาขายเหลือ 50%":"";
       toast(`${fish.typeData.name} • ${status.emoji} ${status.label}
-❤️ ${Math.round(fish.health)}/${fish.maxHealth||fish.typeData.maxHealth||100}   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}${buffLine}`);
+❤️ ${Math.round(fish.health)}/${fish.maxHealth||fish.typeData.maxHealth||100}   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}${buffLine}${electricLine}`);
       return;
     }
     if(p.y>tankTop&&p.y<tankBottom-5) createFood(p.x,p.y);
