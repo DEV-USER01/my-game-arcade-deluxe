@@ -195,7 +195,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Tank Capacity: ตู้เลเวล 1 จุปลา 4 ตัว และเพิ่มความจุอีก 2 ตัวทุกครั้งที่อัปตู้</p>
+      <p>เวอร์ชัน Expensive Tank: อัปเกรดตู้เริ่ม 50,000 เหรียญ และราคาเพิ่มประมาณ 2.25 เท่าทุกเลเวล</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -357,7 +357,8 @@
   }
   function snailCost(){ return 8000; }
   function pearlCost(){
-    return Math.round((5000*Math.pow(1.75,state.pearlLevel))/100)*100;
+    // อัปตู้แพงขึ้นมาก: เริ่ม 50,000 และเพิ่ม 2.25 เท่าต่อเลเวล
+    return Math.round((50000*Math.pow(2.25,state.pearlLevel))/1000)*1000;
   }
   function rescueCost(){
     return Math.min(
@@ -890,7 +891,7 @@
       {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • ปลาโตไวขึ้น`, price:state.foodLevel>=5?null:foodUpgradeCost(), action:()=>buy("food")},
       {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:snailCost(), action:()=>buy("snail")},
       ...guardianUpgrades,
-      {emoji:"🦪", name:`อัปตู้เป็น Lv.${tankLevel()+1}`, desc:`เพิ่มความจุจาก ${fishCapacity()} เป็น ${fishCapacity()+2} ตัว พร้อมโบนัสถาวร`, price:pearlCost(), action:upgradeTank},
+      {emoji:"🦪", name:`อัปตู้เป็น Lv.${tankLevel()+1}`, desc:`เพิ่มความจุจาก ${fishCapacity()} เป็น ${fishCapacity()+2} ตัว • ราคาเพิ่มประมาณ 2.25 เท่าทุกเลเวล`, price:pearlCost(), action:upgradeTank},
       {emoji:"🛟", name:"หน่วยกู้ภัย", desc:`คืนชีวิตให้ตู้ปลา • ค่าใช้จ่าย ${rescueCost()} เหรียญ`, price:rescueCost(), action:()=>rescueTank(false)},
     ];
     upgrades.forEach(u=>{
