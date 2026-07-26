@@ -226,7 +226,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Guardian Separation: ปลาองครักษ์กระจายตำแหน่งและเว้นระยะ ไม่กองรวมเป็นกระจุก</p>
+      <p>เวอร์ชัน Snail Redesign: ปรับโมเดลหอยเก็บเหรียญใหม่ พร้อมเปลือก หนวด ตา และแอนิเมชัน</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -2501,11 +2501,161 @@
   }
 
   function drawSnail(s){
-    ctx.save();ctx.translate(s.x,s.y);ctx.scale(s.dir,1);
-    ctx.fillStyle="#ffc26c";ctx.beginPath();ctx.ellipse(4,-6,21,9,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#ae6edd";ctx.beginPath();ctx.arc(-5,-13,15,0,Math.PI*2);ctx.fill();
-    ctx.strokeStyle="#744297";ctx.lineWidth=3;ctx.beginPath();ctx.arc(-5,-13,8,0,Math.PI*1.7);ctx.stroke();
-    ctx.strokeStyle="#ffc26c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(18,-12);ctx.lineTo(24,-24);ctx.moveTo(12,-12);ctx.lineTo(15,-24);ctx.stroke();ctx.restore();
+    const bob=Math.sin(state.elapsed*5+s.x*.025)*1.2;
+    const feeler=Math.sin(state.elapsed*4.2+s.x*.02)*.08;
+    const eyeLook=s.dir>0?1.2:-1.2;
+
+    ctx.save();
+    ctx.translate(s.x,s.y+bob);
+    ctx.scale(s.dir,1);
+
+    // เงาบนพื้นทราย
+    ctx.save();
+    ctx.globalAlpha=.20;
+    ctx.fillStyle="#143b46";
+    ctx.beginPath();
+    ctx.ellipse(-1,1,31,5.5,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // เมือกเรืองแสงจาง ๆ ขณะเคลื่อนที่
+    ctx.save();
+    ctx.globalAlpha=.23;
+    const slime=ctx.createLinearGradient(-34,0,20,0);
+    slime.addColorStop(0,"rgba(124,246,224,0)");
+    slime.addColorStop(.5,"rgba(124,246,224,.75)");
+    slime.addColorStop(1,"rgba(124,246,224,.12)");
+    ctx.strokeStyle=slime;
+    ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(-34,-1);
+    ctx.quadraticCurveTo(-8,2,20,-1);
+    ctx.stroke();
+    ctx.restore();
+
+    // เท้าหอยและลำตัว
+    const foot=ctx.createLinearGradient(-25,-9,28,2);
+    foot.addColorStop(0,"#e9944f");
+    foot.addColorStop(.48,"#ffc875");
+    foot.addColorStop(1,"#ffe2a5");
+    ctx.fillStyle=foot;
+    ctx.strokeStyle="#945126";
+    ctx.lineWidth=1.8;
+    ctx.beginPath();
+    ctx.moveTo(-25,-4);
+    ctx.quadraticCurveTo(-12,-12,4,-10);
+    ctx.quadraticCurveTo(17,-10,27,-6);
+    ctx.quadraticCurveTo(34,-2,27,1);
+    ctx.quadraticCurveTo(3,5,-22,1);
+    ctx.quadraticCurveTo(-29,-1,-25,-4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // หัว
+    ctx.fillStyle="#ffd08a";
+    ctx.strokeStyle="#945126";
+    ctx.lineWidth=1.7;
+    ctx.beginPath();
+    ctx.ellipse(22,-9,10.5,9,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    // หนวดตา
+    ctx.save();
+    ctx.translate(18,-14);
+    ctx.rotate(feeler);
+    ctx.strokeStyle="#b66b35";
+    ctx.lineWidth=1.7;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(1,-8,4,-15);
+    ctx.moveTo(7,1);
+    ctx.quadraticCurveTo(10,-7,12,-14);
+    ctx.stroke();
+
+    // ลูกตาบนปลายหนวด
+    for(const [x,y] of [[4,-15],[12,-14]]){
+      ctx.fillStyle="#fffaf0";
+      ctx.strokeStyle="#70401f";
+      ctx.lineWidth=1.2;
+      ctx.beginPath();
+      ctx.arc(x,y,3.4,0,Math.PI*2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle="#17313b";
+      ctx.beginPath();
+      ctx.arc(x+eyeLook*.18,y+.3,1.45,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle="#fff";
+      ctx.beginPath();
+      ctx.arc(x+eyeLook*.25-.35,y-.35,.45,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // ปากยิ้ม
+    ctx.strokeStyle="#8c4828";
+    ctx.lineWidth=1.4;
+    ctx.beginPath();
+    ctx.arc(27,-7,4,.25,1.25);
+    ctx.stroke();
+
+    // เปลือกหอยทรงชัดเจน
+    const shell=ctx.createRadialGradient(-7,-20,3,-8,-15,22);
+    shell.addColorStop(0,"#f4c4ff");
+    shell.addColorStop(.28,"#c88aea");
+    shell.addColorStop(.66,"#8d52c8");
+    shell.addColorStop(1,"#56308b");
+    ctx.fillStyle=shell;
+    ctx.strokeStyle="#46236f";
+    ctx.lineWidth=2.3;
+    ctx.beginPath();
+    ctx.arc(-7,-15,18,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    // ขอบล่างของเปลือก
+    ctx.fillStyle="rgba(255,223,255,.30)";
+    ctx.beginPath();
+    ctx.ellipse(-7,-8,13,4,0,0,Math.PI*2);
+    ctx.fill();
+
+    // ลายก้นหอย
+    ctx.strokeStyle="#f1c4ff";
+    ctx.lineWidth=2.2;
+    ctx.beginPath();
+    ctx.arc(-7,-15,11,.15,Math.PI*1.92);
+    ctx.arc(-7,-15,6,.2,Math.PI*1.75);
+    ctx.stroke();
+
+    ctx.strokeStyle="rgba(65,29,105,.55)";
+    ctx.lineWidth=1.1;
+    ctx.beginPath();
+    ctx.arc(-7,-15,14,.25,Math.PI*1.55);
+    ctx.stroke();
+
+    // ประกายที่เปลือก
+    ctx.fillStyle="rgba(255,255,255,.70)";
+    ctx.beginPath();
+    ctx.ellipse(-13,-22,5,2.4,-.45,0,Math.PI*2);
+    ctx.fill();
+
+    // ฟองเล็ก ๆ ด้านหลัง
+    ctx.globalAlpha=.42;
+    ctx.strokeStyle="#d9fbff";
+    ctx.lineWidth=1;
+    for(let i=0;i<2;i++){
+      const bx=-29-i*7;
+      const by=-11-i*7+Math.sin(state.elapsed*2+i)*2;
+      ctx.beginPath();
+      ctx.arc(bx,by,2.4+i*.7,0,Math.PI*2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
   }
 
   function draw(){
