@@ -65,6 +65,24 @@
       background:linear-gradient(135deg,#66efff,#4a8cff);color:#03253d;border:0;font-weight:950
     }
     .actionBtn:active{transform:translateY(2px)}
+    #eventBanner{
+      position:absolute;z-index:35;left:50%;top:calc(var(--safe-top) + 94px);
+      transform:translateX(-50%);width:min(92%,430px);padding:8px 11px 7px;border-radius:16px;
+      border:1px solid rgba(255,255,255,.30);background:rgba(4,29,48,.92);
+      box-shadow:0 8px 26px rgba(0,0,0,.30);backdrop-filter:blur(9px);pointer-events:none
+    }
+    #eventBanner.rainbow{background:linear-gradient(110deg,rgba(113,67,190,.94),rgba(34,132,190,.94),rgba(35,154,108,.94))}
+    #eventBanner.storm{background:linear-gradient(110deg,rgba(23,35,67,.96),rgba(44,64,103,.96))}
+    #eventBanner.gold{background:linear-gradient(110deg,rgba(105,65,9,.96),rgba(174,112,12,.96))}
+    #eventBanner.blessing{background:linear-gradient(110deg,rgba(17,92,102,.96),rgba(74,67,150,.96))}
+    .eventTop{display:flex;align-items:center;gap:8px}
+    #eventIcon{font-size:23px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+    .eventText{min-width:0;flex:1}
+    #eventName{display:block;font-size:13px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #eventDesc{display:block;font-size:10px;font-weight:700;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #eventTime{font-size:12px;font-weight:950;white-space:nowrap}
+    .eventTrack{height:4px;margin-top:6px;border-radius:999px;background:rgba(0,0,0,.28);overflow:hidden}
+    #eventBar{height:100%;width:100%;border-radius:999px;background:rgba(255,255,255,.92)}
     #speciesStrip{
       position:absolute;left:8px;right:8px;bottom:82px;display:flex;gap:6px;overflow:auto;
       padding-bottom:4px;pointer-events:auto
@@ -180,6 +198,19 @@
     <button id="pauseBtn" aria-label="หยุดเกม">⏸</button>
   </div>
 
+  <div id="eventBanner" class="hidden">
+    <div class="eventTop">
+      <span id="eventIcon">✨</span>
+      <div class="eventText">
+        <strong id="eventName">อีเวนต์พิเศษ</strong>
+        <small id="eventDesc">ปลาทั้งตู้ได้รับบัฟ</small>
+      </div>
+      <span id="eventTime">0 วิ</span>
+    </div>
+    <div class="eventTrack"><div id="eventBar"></div></div>
+  </div>
+
+
   
 
   <div id="speciesStrip" aria-label="สายพันธุ์ปลา"></div>
@@ -195,7 +226,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Expensive Shop: เพิ่มราคาซื้อปลาและปลาองครักษ์ประมาณ 3 เท่า โดยราคาอัปเกรดยังคงเดิม</p>
+      <p>เวอร์ชัน Aquarium Events: เพิ่มอีเวนต์สายรุ้ง พายุ ทอง และพรแห่งทะเล พร้อมบัฟติดบนตัวปลา</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -321,6 +352,14 @@
       color:"#7ee8ff", desc:"รุ่นสูงสุด ยิงแรงที่สุดและไล่ล่าเร็ว"
     }
   };
+  const EVENT_TYPES = {
+    rainbow:{key:"rainbow",name:"อีเวนต์สายรุ้ง",icon:"🌈",className:"rainbow",duration:48,desc:"โตไว x2.2 • ฟื้นเลือด x4 • หิวช้าลง",fishBuff:"พรสายรุ้ง",growthMul:2.2,healMul:4,hungerMul:.65,speedMul:1.12,coinRateMul:1.25,coinValueMul:1.25,damageTakenMul:.8,enemySpeedMul:1,enemyRewardMul:1.25,guardianDamageMul:1.15},
+    storm:{key:"storm",name:"อีเวนต์พายุ",icon:"⛈️",className:"storm",duration:38,desc:"ปลาเร็ว x1.4 • เกราะ 35% • ศัตรูเร็ว • รางวัล x2",fishBuff:"พลังพายุ",growthMul:1.15,healMul:1.25,hungerMul:.92,speedMul:1.4,coinRateMul:1.35,coinValueMul:1.35,damageTakenMul:.65,enemySpeedMul:1.35,enemyRewardMul:2,guardianDamageMul:1.45},
+    gold:{key:"gold",name:"อีเวนต์ทอง",icon:"🪙",className:"gold",duration:45,desc:"ออกเหรียญ x2.6 • มูลค่าเหรียญ x3",fishBuff:"เกล็ดทอง",growthMul:1.2,healMul:1.35,hungerMul:.82,speedMul:1.08,coinRateMul:2.6,coinValueMul:3,damageTakenMul:.88,enemySpeedMul:1,enemyRewardMul:2.2,guardianDamageMul:1.1},
+    blessing:{key:"blessing",name:"อีเวนต์พรแห่งทะเล",icon:"✨",className:"blessing",duration:50,desc:"หิวช้าลง 55% • ฟื้นเลือด x3 • เกราะ 50%",fishBuff:"พรแห่งทะเล",growthMul:1.55,healMul:3,hungerMul:.45,speedMul:1.2,coinRateMul:1.45,coinValueMul:1.45,damageTakenMul:.5,enemySpeedMul:.92,enemyRewardMul:1.35,guardianDamageMul:1.25}
+  };
+  const NO_EVENT_EFFECTS={growthMul:1,healMul:1,hungerMul:1,speedMul:1,coinRateMul:1,coinValueMul:1,damageTakenMul:1,enemySpeedMul:1,enemyRewardMul:1,guardianDamageMul:1};
+
   const MAX_GUARDIANS_PER_TYPE = 3;
   const MAX_GUARDIANS = Object.keys(GUARDIAN_TYPES).length * MAX_GUARDIANS_PER_TYPE;
 
@@ -331,6 +370,8 @@
     coins:$("coins"), goal:$("goal"), wave:$("wave"), tankStats:$("tankStats"),
     toast:$("toast"), speciesStrip:$("speciesStrip"), fishShop:$("fishShop"), upgradeShop:$("upgradeShop"),
     fishMarket:$("fishMarket"), marketSummary:$("marketSummary"),
+    eventBanner:$("eventBanner"), eventIcon:$("eventIcon"), eventName:$("eventName"),
+    eventDesc:$("eventDesc"), eventTime:$("eventTime"), eventBar:$("eventBar"),
     shopOverlay:$("shopOverlay"), startOverlay:$("startOverlay"), pauseOverlay:$("pauseOverlay")
   };
 
@@ -343,6 +384,7 @@
   const state = {
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
     snail:null, elapsed:0, nextEnemy:24, wave:1, pearlLevel:0, rescues:0, combo:0, rescueCooldown:0,
+    activeEvent:null,nextEventAt:20,lastEventKey:null,eventUiSecond:-1,
     soldCount:0, salesCoins:0,
     selectedType:"goldfish", shopFocus:"goldfish"
   };
@@ -480,6 +522,33 @@
     clearTimeout(toast.t);toast.t=setTimeout(()=>ui.toast.classList.remove("show"),duration);
   }
 
+  function currentEventEffects(){return state.activeEvent?state.activeEvent.type:NO_EVENT_EFFECTS;}
+  function scheduleNextEvent(first=false){state.nextEventAt=state.elapsed+(first?18+Math.random()*10:70+Math.random()*45);state.eventUiSecond=-1;}
+  function updateEventUI(force=false){
+    if(!ui.eventBanner)return;
+    const a=state.activeEvent;
+    if(!a){ui.eventBanner.className="hidden";return;}
+    const remaining=Math.max(0,a.endsAt-state.elapsed),whole=Math.ceil(remaining);
+    if(!force&&whole===state.eventUiSecond)return;
+    state.eventUiSecond=whole;ui.eventBanner.className=a.type.className;ui.eventIcon.textContent=a.type.icon;
+    ui.eventName.textContent=a.type.name;ui.eventDesc.textContent=a.type.desc;ui.eventTime.textContent=`${whole} วิ`;
+    ui.eventBar.style.width=`${Math.max(0,Math.min(100,remaining/a.type.duration*100))}%`;
+  }
+  function startRandomEvent(){
+    const pool=Object.values(EVENT_TYPES).filter(e=>e.key!==state.lastEventKey);
+    const type=pool[Math.floor(Math.random()*pool.length)]||EVENT_TYPES.rainbow;
+    state.activeEvent={key:type.key,type,startedAt:state.elapsed,endsAt:state.elapsed+type.duration};state.lastEventKey=type.key;state.eventUiSecond=-1;
+    state.fish.forEach(f=>{f.eventBuff=type.key;f.eventBuffUntil=state.activeEvent.endsAt;});
+    state.guardians.forEach(g=>{g.eventBuff=type.key;g.eventBuffUntil=state.activeEvent.endsAt;});
+    toast(`${type.icon} ${type.name} เริ่มแล้ว!\n${type.desc}`);beep(520,.08,"sine",.035);setTimeout(()=>beep(680,.08,"triangle",.03),90);setTimeout(()=>beep(880,.13,"sine",.03),180);updateEventUI(true);updateUI();
+  }
+  function endActiveEvent(){
+    const ended=state.activeEvent;if(!ended)return;
+    state.fish.forEach(f=>{f.eventBuff=null;f.eventBuffUntil=0;});state.guardians.forEach(g=>{g.eventBuff=null;g.eventBuffUntil=0;});
+    state.activeEvent=null;scheduleNextEvent(false);updateEventUI(true);toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);updateUI();
+  }
+  function updateEventSystem(){if(state.activeEvent){if(state.elapsed>=state.activeEvent.endsAt)endActiveEvent();else updateEventUI(false);}else if(state.elapsed>=state.nextEventAt)startRandomEvent();}
+
   function randomType(){
     const r = Math.random();
     if(r>.985) return "lionfish";
@@ -496,6 +565,7 @@
   function reset(loadSaved=false){
     state.coins=30;state.foodLevel=1;state.fish=[];state.foods=[];state.coinsDrop=[];state.enemies=[];state.guardians=[];state.guardShots=[];
     state.snail=null;state.elapsed=0;state.nextEnemy=24;state.wave=1;state.pearlLevel=0;state.rescues=0;state.combo=0;state.rescueCooldown=0;
+    state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
     state.soldCount=0;state.salesCoins=0;
     state.selectedType="goldfish";
     if(loadSaved && loadProgress()){
@@ -539,6 +609,7 @@
       state.selectedType = FISH_TYPES[data.selectedType] ? data.selectedType : "goldfish";
       state.snail = data.snail ? {x:W*.2,y:tankBottom-12,vx:24,dir:1} : null;
       state.elapsed = 0; state.nextEnemy = 15; state.foods=[]; state.coinsDrop=[]; state.enemies=[]; state.guardians=[]; state.guardShots=[];
+      state.activeEvent=null;state.lastEventKey=null;state.eventUiSecond=-1;scheduleNextEvent(true);
       state.fish=[];
       if(data.fish.length===0) data.fish.push({type:"goldfish"});
       data.fish.slice(0,60).forEach((saved,i)=>{
@@ -582,7 +653,8 @@
       x,y,vx:side*(24+Math.random()*18)*type.speed,vy:(Math.random()-.5)*14,dir:side,
       hunger:24+Math.random()*16,growth:0,maxHealth:type.maxHealth||100,health:type.maxHealth||100,coinTimer:6+Math.random()*3,
       hueBase,hueShift:(Math.random()-.5)*10,wobble:Math.random()*10,baseSize:.8+.06*Math.random(),size:.82,
-      temperament:.85+Math.random()*.35,statusPhase:Math.random()*9
+      temperament:.85+Math.random()*.35,statusPhase:Math.random()*9,
+      eventBuff:state.activeEvent?.key||null,eventBuffUntil:state.activeEvent?.endsAt||0
     });
   }
 
@@ -598,7 +670,8 @@
     state.guardians.push({
       typeKey:type.key,typeData:type,
       x,y,vx:side*(28+Math.random()*10)*type.speed,vy:(Math.random()-.5)*12,dir:side,
-      wobble:Math.random()*8,attackTimer:.18+Math.random()*.36,target:null
+      wobble:Math.random()*8,attackTimer:.18+Math.random()*.36,target:null,
+      eventBuff:state.activeEvent?.key||null,eventBuffUntil:state.activeEvent?.endsAt||0
     });
     return true;
   }
@@ -835,7 +908,8 @@
   function updateUI(){
     ui.coins.textContent=Math.floor(state.coins);
     ui.goal.textContent=`${state.pearlLevel} • ถัดไป ${pearlCost().toLocaleString("th-TH")}`;
-    ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด`;
+    const eventLabel=state.activeEvent?` • ${state.activeEvent.type.icon} ${state.activeEvent.type.name}`:"";
+    ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด${eventLabel}`;
     ui.tankStats.textContent=`ปลา ${state.fish.length}/${fishCapacity()} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
   }
 
@@ -914,7 +988,7 @@
   }
 
   function update(dt){
-    state.elapsed+=dt;
+    state.elapsed+=dt;updateEventSystem();const eventFx=currentEventEffects();
     state.rescueCooldown=Math.max(0,state.rescueCooldown-dt);
 
     for(const b of state.bubbles){
@@ -929,22 +1003,22 @@
 
     for(let i=state.fish.length-1;i>=0;i--){
       const f=state.fish[i], t=f.typeData;
-      f.hunger+=dt*(1.45+f.size*.25)*t.hungerMul*Math.max(.55,1-state.pearlLevel*.035);
+      f.hunger+=dt*(1.45+f.size*.25)*t.hungerMul*Math.max(.55,1-state.pearlLevel*.035)*eventFx.hungerMul;
       f.wobble+=dt*(3.5+t.speed*.7);
       const target=nearest(state.foods,f.x,f.y,240);
       if(target&&f.hunger>22){
         let dx=target.x-f.x,dy=target.y-f.y,d=Math.hypot(dx,dy)||1;
-        f.vx+=(dx/d)*95*t.speed*dt;f.vy+=(dy/d)*85*t.speed*dt;
+        f.vx+=(dx/d)*95*t.speed*eventFx.speedMul*dt;f.vy+=(dy/d)*85*t.speed*eventFx.speedMul*dt;
         if(d<18+f.size*8){
           const idx=state.foods.indexOf(target);if(idx>=0)state.foods.splice(idx,1);
           f.hunger=Math.max(0,f.hunger-(38+state.foodLevel*7));
-          f.growth+= (6.7+state.foodLevel*2.2)*t.growthMul; f.size=Math.min(1.85,f.baseSize+f.growth/140);
+          f.growth+=(6.7+state.foodLevel*2.2)*t.growthMul*eventFx.growthMul; f.size=Math.min(1.85,f.baseSize+f.growth/140);
           beep(300+f.size*120,.03,"sine",.01);
         }
       } else {
-        f.vx+=(Math.random()-.5)*28*dt*t.speed;f.vy+=(Math.random()-.5)*18*dt*t.speed;
+        f.vx+=(Math.random()-.5)*28*dt*t.speed*eventFx.speedMul;f.vy+=(Math.random()-.5)*18*dt*t.speed*eventFx.speedMul;
       }
-      const speed=Math.hypot(f.vx,f.vy), max=(42+f.size*22)*t.speed;
+      const speed=Math.hypot(f.vx,f.vy), max=(42+f.size*22)*t.speed*eventFx.speedMul;
       if(speed>max){f.vx=f.vx/speed*max;f.vy=f.vy/speed*max}
       f.x+=f.vx*dt;f.y+=f.vy*dt; if(Math.abs(f.vx)>3)f.dir=Math.sign(f.vx);
       const pad=26+f.size*13;
@@ -954,12 +1028,13 @@
       if(f.y>tankBottom-40){f.y=tankBottom-40;f.vy=-Math.abs(f.vy)}
       const maxHealth=f.maxHealth||t.maxHealth||100;
       if(f.hunger>100){f.health-=dt*(5.4+(f.hunger-100)*.06)/t.hpMul}
-      else f.health=Math.min(maxHealth,f.health+dt*.5*t.hpMul);
-      f.coinTimer-=dt;
+      else f.health=Math.min(maxHealth,f.health+dt*.5*t.hpMul*eventFx.healMul);
+      f.coinTimer-=dt*eventFx.coinRateMul;
       if(f.size>1.0&&f.coinTimer<=0){
         const base = t.coinBase;
-        const val=f.size>1.55?Math.max(7,Math.round(base*2.4)):f.size>1.28?Math.max(4,Math.round(base*1.6)):base;
-        dropCoin(f.x,f.y,val);
+        const normalVal=f.size>1.55?Math.max(7,Math.round(base*2.4)):f.size>1.28?Math.max(4,Math.round(base*1.6)):base;
+        const val=Math.max(1,Math.round(normalVal*eventFx.coinValueMul));
+        dropCoin(f.x,f.y,val,state.activeEvent?.key==="gold"?"gem":"coin");
         f.coinTimer=Math.max(3.8,9-(f.size*2.2+t.coinRate*1.6))+Math.random()*2.7;
       }
       if(f.health<=0){state.fish.splice(i,1);toast(`${t.name} หายไปแล้ว`)}
@@ -995,7 +1070,7 @@
           g.vy+=(dx/d)*20*gt.speed*dt;
         }
         if(d<gt.range&&g.attackTimer<=0){
-          const damage=gt.damage+state.pearlLevel*(.22+gt.damage*.025);
+          const damage=(gt.damage+state.pearlLevel*(.22+gt.damage*.025))*eventFx.guardianDamageMul;
           g.target.hp-=damage;
           state.guardShots.push({
             x:g.x+g.dir*24,y:g.y-2,tx:g.target.x,ty:g.target.y,
@@ -1035,17 +1110,17 @@
       if(!e.target||!state.fish.includes(e.target))e.target=nearest(state.fish,e.x,e.y);
       if(e.target){
         const dx=e.target.x-e.x,dy=e.target.y-e.y,d=Math.hypot(dx,dy)||1;
-        e.x+=dx/d*e.speed*dt;
-        e.y+=dy/d*e.speed*dt;
+        e.x+=dx/d*e.speed*eventFx.enemySpeedMul*dt;
+        e.y+=dy/d*e.speed*eventFx.enemySpeedMul*dt;
         if(e.key==="jelly") e.y += Math.sin(e.wobble*1.6)*10*dt;
         if(e.key==="crab") e.y = Math.min(tankBottom-26, Math.max(tankTop+70, e.y));
         e.vx=dx;
         if(d<25+e.target.size*10+((e.scale||1)-1)*18){
-          e.target.health-=e.damage*dt*(1-Math.min(.45,state.pearlLevel*.045));
+          e.target.health-=e.damage*dt*(1-Math.min(.45,state.pearlLevel*.045))*eventFx.damageTakenMul;
         }
       }
       if(e.hp<=0){
-        dropCoin(e.x,e.y,Math.round((18+Math.floor(state.wave*2.1))*e.type.rewardMul), e.key==="jelly"||e.key==="squid"?"gem":"coin");
+        dropCoin(e.x,e.y,Math.round((18+Math.floor(state.wave*2.1))*e.type.rewardMul*eventFx.enemyRewardMul),state.activeEvent?.key==="gold"||e.key==="jelly"||e.key==="squid"?"gem":"coin");
         state.enemies.splice(i,1); toast(`กำจัด${e.type.name}แล้ว!`); saveProgress();
       }
     }
@@ -1300,6 +1375,22 @@
     depthFog.addColorStop(1,"rgba(0,35,52,.15)");
     ctx.fillStyle=depthFog;
     ctx.fillRect(0,tankTop,W,tankBottom-tankTop);
+  }
+
+  function drawEventAtmosphere(){
+    const active=state.activeEvent;if(!active)return;const key=active.key,top=tankTop,height=Math.max(0,tankBottom-tankTop);ctx.save();
+    if(key==="rainbow"){
+      const gr=ctx.createLinearGradient(0,top,W,tankBottom);gr.addColorStop(0,"rgba(255,80,120,.10)");gr.addColorStop(.22,"rgba(255,190,70,.09)");gr.addColorStop(.45,"rgba(80,240,170,.09)");gr.addColorStop(.68,"rgba(70,180,255,.10)");gr.addColorStop(1,"rgba(180,90,255,.10)");ctx.fillStyle=gr;ctx.fillRect(0,top,W,height);
+      ["#ff6688","#ffcc55","#68eeaa","#62caff","#b47cff"].forEach((c,i)=>{ctx.strokeStyle=c;ctx.globalAlpha=.18;ctx.lineWidth=3;ctx.beginPath();ctx.arc(W*.5,tankTop+40,W*.34-i*7,Math.PI*.12,Math.PI*.88);ctx.stroke();});
+    }else if(key==="storm"){
+      ctx.fillStyle="rgba(13,22,55,.20)";ctx.fillRect(0,top,W,height);ctx.strokeStyle="rgba(160,210,255,.30)";ctx.lineWidth=1.2;
+      for(let i=0;i<24;i++){const x=(i*47+state.elapsed*180)%Math.max(1,W+80)-40,y=top+((i*83+state.elapsed*240)%Math.max(1,height));ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-9,y+22);ctx.stroke();}
+      if((Math.sin(state.elapsed*3.7)+Math.sin(state.elapsed*7.1))>1.78){ctx.fillStyle="rgba(220,242,255,.18)";ctx.fillRect(0,top,W,height);}
+    }else if(key==="gold"){
+      ctx.fillStyle="rgba(255,196,55,.085)";ctx.fillRect(0,top,W,height);for(let i=0;i<20;i++){const x=(i*71+Math.sin(state.elapsed*.7+i)*28)%Math.max(1,W),y=top+((i*97-state.elapsed*18+height*5)%Math.max(1,height)),p=.5+.5*Math.sin(state.elapsed*3+i);ctx.globalAlpha=.18+.35*p;ctx.fillStyle="#ffe786";ctx.beginPath();ctx.arc(x,y,1.5+2*p,0,Math.PI*2);ctx.fill();}
+    }else{
+      ctx.fillStyle="rgba(93,230,224,.075)";ctx.fillRect(0,top,W,height);for(let i=0;i<14;i++){const x=(i*59+Math.sin(state.elapsed*.5+i)*22)%Math.max(1,W),y=top+((i*89-state.elapsed*12+height*6)%Math.max(1,height));ctx.globalAlpha=.18;ctx.strokeStyle="#c9ffff";ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(x,y,5+(i%3)*2,0,Math.PI*2);ctx.stroke();}
+    }ctx.restore();
   }
 
   function drawFood(f){
@@ -1912,6 +2003,7 @@
 
     ctx.restore();
 
+    drawFishEventBuff(f);
     const maxHealth=f.maxHealth||t.maxHealth||100;
     const hpRatio=Math.max(0,Math.min(1,f.health/maxHealth));
     if(hpRatio<.92){
@@ -1950,6 +2042,19 @@
       ctx.fillText(label,bx+bw/2,by+9);
       ctx.restore();
     }
+  }
+
+  function drawFishEventBuff(f){
+    const active=state.activeEvent;if(!active||f.eventBuff!==active.key)return;const pulse=.5+.5*Math.sin(state.elapsed*4+(f.statusPhase||0)),radius=(25+5*pulse)*f.size;ctx.save();ctx.translate(f.x,f.y);ctx.globalAlpha=.35+.25*pulse;ctx.lineWidth=1.7+f.size*.3;
+    if(active.key==="rainbow"){
+      ["#ff6688","#ffd45d","#5ee7a4","#61c9ff","#b77cff"].forEach((c,i)=>{ctx.strokeStyle=c;ctx.beginPath();ctx.arc(0,0,radius+i*1.2,i*.9,i*.9+1.15);ctx.stroke();});
+    }else if(active.key==="storm"){
+      ctx.strokeStyle="#8bd8ff";ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(-6,-radius);ctx.lineTo(2,-radius-8);ctx.lineTo(-1,-radius-1);ctx.lineTo(7,-radius-9);ctx.stroke();
+    }else if(active.key==="gold"){
+      ctx.strokeStyle="#ffe173";ctx.lineWidth=2.3;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();for(let i=0;i<5;i++){const a=i*Math.PI*2/5+state.elapsed*.4;ctx.fillStyle="#fff2a5";ctx.beginPath();ctx.arc(Math.cos(a)*radius,Math.sin(a)*radius,1.6+pulse,0,Math.PI*2);ctx.fill();}
+    }else{
+      ctx.strokeStyle="#abfff4";ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();ctx.strokeStyle="#d7c7ff";ctx.beginPath();ctx.arc(0,0,radius-4,0,Math.PI*2);ctx.stroke();
+    }ctx.restore();ctx.save();const ix=f.x+22*f.size,iy=f.y-20*f.size;ctx.fillStyle="rgba(3,25,43,.82)";ctx.strokeStyle="rgba(255,255,255,.45)";ctx.lineWidth=1;ctx.beginPath();ctx.arc(ix,iy,9,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.font="12px system-ui,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(active.type.icon,ix,iy+.5);ctx.restore();
   }
 
   function drawGuardian(g){
@@ -2036,7 +2141,8 @@
     ctx.save();
     ctx.font="700 8.5px system-ui,sans-serif";
     ctx.textAlign="center";ctx.textBaseline="middle";
-    const label=g.target?"⚔️ ป้องกัน":`${gt.emoji} เฝ้าระวัง`;
+    const eventIcon=state.activeEvent&&g.eventBuff===state.activeEvent.key?`${state.activeEvent.type.icon} `:"";
+    const label=eventIcon+(g.target?"⚔️ ป้องกัน":`${gt.emoji} เฝ้าระวัง`);
     const bw=Math.min(70,Math.max(43,ctx.measureText(label).width+10));
     ctx.fillStyle="rgba(3,35,53,.80)";
     drawRoundRect(g.x-bw/2,g.y-37,bw,16,8);ctx.fill();
@@ -2242,7 +2348,7 @@
   }
 
   function draw(){
-    drawBackground();
+    drawBackground();drawEventAtmosphere();
     for(const f of state.foods) drawFood(f);
     for(const c of state.coinsDrop) drawCoin(c);
     if(state.snail) drawSnail(state.snail);
@@ -2283,8 +2389,9 @@
     const fish=nearest(state.fish,p.x,p.y,42);
     if(fish){
       const status=getFishStatus(fish);
+      const buffLine=state.activeEvent&&fish.eventBuff===state.activeEvent.key?`\n${state.activeEvent.type.icon} บัฟ: ${state.activeEvent.type.fishBuff}`:"";
       toast(`${fish.typeData.name} • ${status.emoji} ${status.label}
-❤️ ${Math.round(fish.health)}/${fish.maxHealth||fish.typeData.maxHealth||100}   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}`);
+❤️ ${Math.round(fish.health)}/${fish.maxHealth||fish.typeData.maxHealth||100}   🍤 ${Math.round(Math.min(130,fish.hunger))}%   ${fishGrowthStage(fish)}${buffLine}`);
       return;
     }
     if(p.y>tankTop&&p.y<tankBottom-5) createFood(p.x,p.y);
@@ -2379,7 +2486,7 @@
   setInterval(()=>{ if(running&&!paused) saveProgress(); },5000);
   addEventListener("pagehide", saveProgress);
 
-  fit(); updateUI(); renderSpeciesStrip(); requestAnimationFrame(loop);
+  fit(); updateUI(); updateEventUI(true); renderSpeciesStrip(); requestAnimationFrame(loop);
 })();
 </script>
 </body>
