@@ -54,7 +54,7 @@
     }
     #bottomBar{
       position:absolute;left:8px;right:8px;bottom:var(--safe-bottom);display:grid;
-      grid-template-columns:1fr 1fr 1fr 1fr;gap:7px;pointer-events:auto
+      grid-template-columns:repeat(5,1fr);gap:6px;pointer-events:auto
     }
     .actionBtn{
       min-height:60px;border-radius:17px;border:1px solid var(--line);
@@ -178,8 +178,9 @@
     .legendItem b{display:block;margin-bottom:4px}
     @media (max-width:520px){
       .tips,.legend{grid-template-columns:1fr}
-      #bottomBar{gap:5px}
-      .actionBtn{font-size:12px}
+      #bottomBar{gap:4px}
+      .actionBtn{font-size:10.5px;padding:6px 2px;min-height:58px}
+      .actionBtn small{font-size:8.5px}
       .pill{padding:7px 9px;font-size:13px}
     }
   </style>
@@ -218,15 +219,16 @@
   <div id="bottomBar">
     <button id="feedHintBtn" class="actionBtn primary">🍤 ให้อาหาร<br><small>แตะในตู้</small></button>
     <button id="shopBtn" class="actionBtn">🛒 ร้านค้า</button>
+    <button id="healBtn" class="actionBtn">💚 รักษา<br><small>ทั้งตู้</small></button>
     <button id="saveBtn" class="actionBtn">💾 บันทึก</button>
-    <button id="rescueBtn" class="actionBtn">🛟 กู้ตู้ปลา</button>
+    <button id="rescueBtn" class="actionBtn">🛟 กู้ตู้</button>
   </div>
 
   <div id="startOverlay" class="overlay">
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Shark Damage Update: ลดดาเมจฉลามจู่โจมลงประมาณครึ่งหนึ่ง</p>
+      <p>เวอร์ชัน Fish Healing: อาหารช่วยฟื้นเลือด และมีปุ่มรักษาปลาทั้งตู้</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -402,6 +404,10 @@
     // อัปตู้แพงขึ้นมาก: เริ่ม 50,000 และเพิ่ม 2.25 เท่าต่อเลเวล
     return Math.round((50000*Math.pow(2.25,state.pearlLevel))/1000)*1000;
   }
+  function healFishCost(){
+    return Math.max(25,Math.round(25+state.fish.length*18+state.pearlLevel*35));
+  }
+
   function rescueCost(){
     return Math.min(
       Math.floor(state.coins),
@@ -962,6 +968,48 @@
     beep(740,.08,"triangle",.03);updateUI();renderShop();saveProgress();
   }
 
+  function healAllFish(){
+    if(state.fish.length===0){
+      toast("ยังไม่มีปลาให้รักษา");
+      return;
+    }
+
+    const injured=state.fish.filter(f=>{
+      const maxHealth=f.maxHealth||f.typeData?.maxHealth||100;
+      return f.health<maxHealth-.5;
+    });
+
+    if(injured.length===0){
+      toast("ปลาทุกตัวเลือดเต็มแล้ว ❤️");
+      return;
+    }
+
+    const cost=healFishCost();
+    if(state.coins<cost){
+      toast(`เหรียญไม่พอ • ค่ารักษา ${cost.toLocaleString("th-TH")} เหรียญ`);
+      beep(180,.08,"square",.022);
+      return;
+    }
+
+    state.coins-=cost;
+    let totalHealed=0;
+    for(const f of injured){
+      const maxHealth=f.maxHealth||f.typeData?.maxHealth||100;
+      const before=f.health;
+      const amount=Math.max(24,maxHealth*.45);
+      f.health=Math.min(maxHealth,f.health+amount);
+      f.hunger=Math.max(0,f.hunger-12);
+      totalHealed+=f.health-before;
+    }
+
+    toast(`💚 รักษาปลา ${injured.length} ตัวแล้ว
+ฟื้นเลือดรวม ${Math.round(totalHealed)} • -${cost.toLocaleString("th-TH")} เหรียญ`);
+    beep(520,.07,"sine",.035);
+    setTimeout(()=>beep(660,.09,"triangle",.03),90);
+    updateUI();
+    saveProgress();
+  }
+
   function rescueTank(force=false){
     if(state.rescueCooldown>0 && !force){ toast("หน่วยกู้ภัยกำลังพัก"); return; }
     const fee = force ? 0 : rescueCost();
@@ -987,6 +1035,12 @@
     const eventLabel=state.activeEvent?` • ${state.activeEvent.type.icon} ${state.activeEvent.type.name}`:"";
     ui.wave.textContent=`คลื่น ${Math.max(1,state.wave-1)} • ไม่สิ้นสุด${eventLabel}`;
     ui.tankStats.textContent=`ปลา ${state.fish.length}/${fishCapacity()} ตัว • องครักษ์ ${state.guardians.length}/${MAX_GUARDIANS} (ชนิดละ 3) • ขายแล้ว ${state.soldCount} • กู้ภัย ${state.rescues} ครั้ง`;
+    const healBtn=$("healBtn");
+    if(healBtn){
+      const cost=healFishCost();
+      healBtn.innerHTML=`💚 รักษา<br><small>${cost.toLocaleString("th-TH")} 🪙</small>`;
+      healBtn.style.opacity=state.fish.length===0?".55":"1";
+    }
   }
 
   function nearest(arr,x,y,max=1e9){
@@ -1039,7 +1093,7 @@
       };
     });
     const upgrades = [
-      {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • ปลาโตไวขึ้น`, price:state.foodLevel>=5?null:foodUpgradeCost(), action:()=>buy("food")},
+      {emoji:"🍤", name:"อัปอาหาร", desc:`ระดับ ${state.foodLevel}/5 • โตไวและฟื้นเลือดมากขึ้นเมื่อกิน`, price:state.foodLevel>=5?null:foodUpgradeCost(), action:()=>buy("food")},
       {emoji:"🐌", name:"หอยเก็บเหรียญ", desc:state.snail?"มีหอยผู้ช่วยแล้ว":"ช่วยเก็บเหรียญแถวพื้นตู้", price:state.snail?null:snailCost(), action:()=>buy("snail")},
       ...guardianUpgrades,
       {emoji:"🦪", name:`อัปตู้เป็น Lv.${tankLevel()+1}`, desc:`เพิ่มความจุจาก ${fishCapacity()} เป็น ${fishCapacity()+2} ตัว • ราคาเพิ่มประมาณ 2.25 เท่าทุกเลเวล`, price:pearlCost(), action:upgradeTank},
@@ -1083,13 +1137,16 @@
       f.hunger+=dt*(1.45+f.size*.25)*t.hungerMul*Math.max(.55,1-state.pearlLevel*.035)*eventFx.hungerMul*permanentFx.hungerMul;
       f.wobble+=dt*(3.5+t.speed*.7);
       const target=nearest(state.foods,f.x,f.y,240);
-      if(target&&f.hunger>22){
+      if(target&&(f.hunger>22||f.health<(f.maxHealth||t.maxHealth||100)*.92)){
         let dx=target.x-f.x,dy=target.y-f.y,d=Math.hypot(dx,dy)||1;
         f.vx+=(dx/d)*95*t.speed*eventFx.speedMul*permanentFx.speedMul*dt;
         f.vy+=(dy/d)*85*t.speed*eventFx.speedMul*permanentFx.speedMul*dt;
         if(d<18+f.size*8){
           const idx=state.foods.indexOf(target);if(idx>=0)state.foods.splice(idx,1);
           f.hunger=Math.max(0,f.hunger-(38+state.foodLevel*7));
+          const foodHeal=(10+state.foodLevel*6)*t.hpMul*eventFx.healMul*permanentFx.healMul;
+          const foodMaxHealth=f.maxHealth||t.maxHealth||100;
+          f.health=Math.min(foodMaxHealth,f.health+foodHeal);
           f.growth+=(6.7+state.foodLevel*2.2)*t.growthMul*eventFx.growthMul*permanentFx.growthMul;
           f.size=Math.min(1.85,f.baseSize+f.growth/140);
           beep(300+f.size*120,.03,"sine",.01);
@@ -2868,6 +2925,7 @@
   canvas.addEventListener("pointerdown",act,{passive:false});
   $("feedHintBtn").onclick=()=>toast("แตะในตู้ปลาเพื่อให้อาหาร");
   $("shopBtn").onclick=()=>{ renderShop(); ui.shopOverlay.classList.remove("hidden"); };
+  $("healBtn").onclick=()=>healAllFish();
   $("closeShopBtn").onclick=()=> ui.shopOverlay.classList.add("hidden");
   $("saveBtn").onclick=()=>{ saveProgress(); toast("บันทึกความคืบหน้าแล้ว"); };
   $("rescueBtn").onclick=()=> rescueTank(false);
