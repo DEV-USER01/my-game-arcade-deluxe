@@ -228,7 +228,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Fish Healing: อาหารช่วยฟื้นเลือด และมีปุ่มรักษาปลาทั้งตู้</p>
+      <p>เวอร์ชัน Enhanced Audio: ปรับเสียงเหรียญ อาหาร การรักษา อีเวนต์ และการต่อสู้ใหม่</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -381,7 +381,8 @@
   const TARGET_FPS = MOBILE_MODE ? 30 : 45;
   const FRAME_MS = 1000 / TARGET_FPS;
   let W=0,H=0,DPR=1, tankTop=90, tankBottom=0, last=0, lastDraw=0, running=false, paused=false;
-  let audioCtx=null, drawTimer=0;
+  let audioCtx=null,audioMaster=null,audioCompressor=null,audioNoiseBuffer=null,drawTimer=0;
+  const soundCooldowns={};
 
   const state = {
     coins:30, foodLevel:1, fish:[], foods:[], coinsDrop:[], enemies:[], guardians:[], guardShots:[], bubbles:[], corals:[], distantFish:[], dust:[], rocks:[], seaweed:[],
@@ -513,13 +514,194 @@
     }
   }
 
+  function ensureAudio(){
+    if(!audioCtx){
+      const AudioClass=window.AudioContext||window.webkitAudioContext;
+      if(!AudioClass) return false;
+      audioCtx=new AudioClass();
+
+      audioCompressor=audioCtx.createDynamicsCompressor();
+      audioCompressor.threshold.value=-20;
+      audioCompressor.knee.value=18;
+      audioCompressor.ratio.value=5;
+      audioCompressor.attack.value=.004;
+      audioCompressor.release.value=.18;
+
+      audioMaster=audioCtx.createGain();
+      audioMaster.gain.value=.72;
+      audioCompressor.connect(audioMaster);
+      audioMaster.connect(audioCtx.destination);
+
+      const length=Math.max(1,Math.floor(audioCtx.sampleRate*.5));
+      audioNoiseBuffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate);
+      const data=audioNoiseBuffer.getChannelData(0);
+      for(let i=0;i<length;i++) data[i]=(Math.random()*2-1)*(1-i/length);
+    }
+    if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
+    return true;
+  }
+
+  function audioOutput(){
+    return audioCompressor||audioCtx?.destination;
+  }
+
+  function playTone(freq=440,dur=.08,type="sine",gain=.025,delay=0,endFreq=freq,pan=0){
+    if(!ensureAudio()) return;
+    const now=audioCtx.currentTime+Math.max(0,delay);
+    const stop=now+Math.max(.025,dur);
+    const osc=audioCtx.createOscillator();
+    const amp=audioCtx.createGain();
+
+    osc.type=type;
+    osc.frequency.setValueAtTime(Math.max(20,freq),now);
+    if(endFreq&&endFreq!==freq){
+      osc.frequency.exponentialRampToValueAtTime(Math.max(20,endFreq),stop);
+    }
+
+    amp.gain.setValueAtTime(.0001,now);
+    amp.gain.exponentialRampToValueAtTime(Math.max(.0002,gain),now+Math.min(.018,dur*.25));
+    amp.gain.exponentialRampToValueAtTime(.0001,stop);
+
+    osc.connect(amp);
+    if(audioCtx.createStereoPanner){
+      const panner=audioCtx.createStereoPanner();
+      panner.pan.value=Math.max(-1,Math.min(1,pan));
+      amp.connect(panner);
+      panner.connect(audioOutput());
+    }else{
+      amp.connect(audioOutput());
+    }
+
+    osc.start(now);
+    osc.stop(stop+.02);
+  }
+
+  function playNoise(dur=.08,gain=.012,frequency=900,type="bandpass",delay=0,pan=0){
+    if(!ensureAudio()||!audioNoiseBuffer) return;
+    const now=audioCtx.currentTime+Math.max(0,delay);
+    const stop=now+Math.max(.025,dur);
+    const source=audioCtx.createBufferSource();
+    const filter=audioCtx.createBiquadFilter();
+    const amp=audioCtx.createGain();
+
+    source.buffer=audioNoiseBuffer;
+    filter.type=type;
+    filter.frequency.setValueAtTime(Math.max(80,frequency),now);
+    filter.Q.value=type==="bandpass"?1.1:.5;
+
+    amp.gain.setValueAtTime(Math.max(.0002,gain),now);
+    amp.gain.exponentialRampToValueAtTime(.0001,stop);
+
+    source.connect(filter);
+    filter.connect(amp);
+    if(audioCtx.createStereoPanner){
+      const panner=audioCtx.createStereoPanner();
+      panner.pan.value=Math.max(-1,Math.min(1,pan));
+      amp.connect(panner);
+      panner.connect(audioOutput());
+    }else{
+      amp.connect(audioOutput());
+    }
+
+    source.start(now,Math.random()*.12);
+    source.stop(stop+.02);
+  }
+
+  function soundReady(name,gapMs=0){
+    const now=performance.now();
+    if(gapMs&&now-(soundCooldowns[name]||0)<gapMs) return false;
+    soundCooldowns[name]=now;
+    return true;
+  }
+
+  function sfx(name,value=0){
+    if(!ensureAudio()) return;
+
+    if(name==="feed"){
+      if(!soundReady(name,45)) return;
+      playTone(760,.075,"sine",.018,0,310,-.15);
+      playTone(1180,.045,"triangle",.009,.018,720,.12);
+      playNoise(.045,.004,1250,"bandpass",0);
+    }else if(name==="eat"){
+      if(!soundReady(name,70)) return;
+      const pitch=390+Math.min(150,Number(value||1)*45);
+      playTone(pitch,.055,"sine",.012,0,pitch*1.34);
+      playTone(pitch*1.65,.035,"triangle",.006,.022,pitch*1.2);
+    }else if(name==="coin"){
+      if(!soundReady(name,28)) return;
+      const combo=Math.max(0,Number(value)||0);
+      const root=720+Math.min(430,combo*15);
+      playTone(root,.065,"triangle",.022,0,root*1.08,-.12);
+      playTone(root*1.5,.09,"sine",.013,.035,root*1.7,.15);
+      if(combo>4) playTone(root*2,.08,"sine",.007,.07,root*2.08,0);
+    }else if(name==="buy"){
+      playTone(523,.08,"triangle",.025,0,590,-.15);
+      playTone(659,.09,"triangle",.022,.065,720,0);
+      playTone(784,.13,"sine",.018,.135,920,.15);
+    }else if(name==="sell"){
+      playTone(660,.07,"triangle",.024,0,720,-.1);
+      playTone(880,.09,"triangle",.022,.065,990,.05);
+      playTone(1100,.13,"sine",.015,.14,1320,.16);
+      playNoise(.08,.004,1800,"highpass",.08);
+    }else if(name==="upgrade"){
+      [523,659,784,1046].forEach((note,i)=>{
+        playTone(note,.12+i*.012,i===3?"sine":"triangle",.022-i*.002,i*.075,note*1.04,(i-1.5)*.12);
+      });
+      playNoise(.18,.005,2100,"highpass",.16);
+    }else if(name==="heal"){
+      [440,554,659,880].forEach((note,i)=>{
+        playTone(note,.16,"sine",.018-i*.001,i*.07,note*1.05,(i-1.5)*.1);
+      });
+      playNoise(.26,.007,2400,"highpass",0);
+    }else if(name==="rescue"){
+      playNoise(.18,.012,650,"bandpass",0);
+      [392,523,659].forEach((note,i)=>playTone(note,.15,"triangle",.021,i*.09,note*1.08,(i-1)*.12));
+    }else if(name==="enemy"){
+      if(!soundReady(name,500)) return;
+      playTone(105,.38,"sawtooth",.035,0,58,-.12);
+      playTone(156,.30,"square",.014,.04,82,.12);
+      playNoise(.28,.012,270,"lowpass",0);
+    }else if(name==="hit"){
+      if(!soundReady(name,38)) return;
+      playTone(185+Math.random()*35,.05,"square",.014,0,105,(Math.random()-.5)*.5);
+      playNoise(.045,.009,720,"bandpass",0);
+    }else if(name==="shot"){
+      if(!soundReady(name,30)) return;
+      const power=Math.max(1,Number(value)||1);
+      const start=610+Math.min(330,power*22);
+      playTone(start,.045,"square",.0065,0,start*1.65,(Math.random()-.5)*.7);
+    }else if(name==="error"){
+      if(!soundReady(name,130)) return;
+      playTone(185,.11,"square",.018,0,125,0);
+      playTone(128,.15,"sawtooth",.009,.045,92,0);
+    }else if(name==="event"){
+      const key=String(value||"");
+      if(key==="storm"){
+        playTone(92,.42,"sawtooth",.030,0,52,-.2);
+        playNoise(.38,.015,320,"lowpass",0);
+        playTone(410,.10,"square",.010,.24,180,.2);
+      }else if(key==="gold"){
+        [740,990,1240,1480].forEach((note,i)=>playTone(note,.11,"triangle",.019-i*.002,i*.06,note*1.08,(i-1.5)*.12));
+      }else if(key==="rainbow"){
+        [523,659,784,988,1175].forEach((note,i)=>playTone(note,.14,"sine",.016,i*.055,note*1.04,(i-2)*.1));
+      }else{
+        [440,587,698,880].forEach((note,i)=>playTone(note,.20,"sine",.017,i*.075,note*1.06,(i-1.5)*.1));
+        playNoise(.28,.005,2500,"highpass",0);
+      }
+    }else if(name==="eventEnd"){
+      playTone(660,.10,"sine",.014,0,590,-.1);
+      playTone(440,.16,"sine",.012,.09,360,.1);
+    }else if(name==="save"){
+      playTone(620,.07,"sine",.014,0,680,-.08);
+      playTone(820,.10,"sine",.012,.065,900,.08);
+    }else{
+      playTone(440,.07,"sine",.015);
+    }
+  }
+
+  // รองรับคำสั่งเสียงเดิมที่ยังเหลือในเกม
   function beep(freq=440,dur=.05,type="sine",gain=.03){
-    if(!audioCtx) return;
-    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.frequency.value=freq; o.type=type; g.gain.value=gain;
-    o.connect(g); g.connect(audioCtx.destination); o.start();
-    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime+dur);
-    o.stop(audioCtx.currentTime+dur);
+    playTone(freq,dur,type,Math.min(.028,gain),0,freq*.97,0);
   }
 
   function toast(msg){
@@ -604,13 +786,13 @@
       if(addPermanentFishBuff(f,type.key)) newlyBuffed++;
     });
     state.guardians.forEach(g=>{g.eventBuff=type.key;g.eventBuffUntil=state.activeEvent.endsAt;});
-    toast(`${type.icon} ${type.name} เริ่มแล้ว!\nปลา ${newlyBuffed} ตัวได้รับบัฟถาวร: ${type.fishBuff}`);beep(520,.08,"sine",.035);setTimeout(()=>beep(680,.08,"triangle",.03),90);setTimeout(()=>beep(880,.13,"sine",.03),180);updateEventUI(true);updateUI();
+    toast(`${type.icon} ${type.name} เริ่มแล้ว!\nปลา ${newlyBuffed} ตัวได้รับบัฟถาวร: ${type.fishBuff}`);sfx("event",type.key);updateEventUI(true);updateUI();
   }
   function endActiveEvent(){
     const ended=state.activeEvent;if(!ended)return;
     state.fish.forEach(f=>{f.eventBuff=null;f.eventBuffUntil=0;});
     state.guardians.forEach(g=>{g.eventBuff=null;g.eventBuffUntil=0;});
-    state.activeEvent=null;scheduleNextEvent(false);updateEventUI(true);toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);updateUI();
+    state.activeEvent=null;scheduleNextEvent(false);updateEventUI(true);toast(`${ended.type.icon} ${ended.type.name} จบแล้ว`);sfx("eventEnd");updateUI();
   }
   function updateEventSystem(){if(state.activeEvent){if(state.elapsed>=state.activeEvent.endsAt)endActiveEvent();else updateEventUI(false);}else if(state.elapsed>=state.nextEventAt)startRandomEvent();}
 
@@ -774,7 +956,7 @@
     if(state.foods.length>=10){ toast("อาหารในตู้เยอะแล้ว"); return; }
     state.coins-=1;
     state.foods.push({x,y,vy:30+state.foodLevel*8,life:14,size:5+state.foodLevel*1.6});
-    beep(560,.04,"triangle",.016); updateUI(); saveProgress();
+    sfx("feed"); updateUI(); saveProgress();
   }
 
   function dropCoin(x,y,value,style="coin"){
@@ -802,7 +984,7 @@
     state.wave++;
     state.nextEnemy=state.elapsed+Math.max(28,58-Math.min(30,baseWave*.65));
     toast(`${et.name} บุก! แตะเพื่อโจมตี`);
-    beep(100,.24,"sawtooth",.04); updateUI();
+    sfx("enemy"); updateUI();
   }
 
   function upgradeTank(){
@@ -821,14 +1003,14 @@
     }
     dropCoin(W*.5,tankTop+110,25+state.pearlLevel*10,"gem");
     toast(`ตู้เลเวล ${tankLevel()} แล้ว! ความจุเพิ่มเป็น ${fishCapacity()} ตัว`);
-    beep(523,.08,"sine",.05);setTimeout(()=>beep(659,.1,"sine",.05),100);setTimeout(()=>beep(784,.14,"sine",.05),220);
+    sfx("upgrade");
     updateUI(); renderShop(); renderSpeciesStrip(); saveProgress();
   }
 
   function buyFish(typeKey){
     const type = FISH_TYPES[typeKey];
     if(!type) return;
-    if(state.coins < type.price){ toast("เหรียญไม่พอ"); beep(180,.08,"square",.022); return; }
+    if(state.coins < type.price){ toast("เหรียญไม่พอ"); sfx("error"); return; }
     if(!tankHasSpace()){
       toast(`ตู้เลเวล ${tankLevel()} เต็มแล้ว (${state.fish.length}/${fishCapacity()} ตัว) • อัปตู้เพื่อเพิ่มอีก 2 ช่อง`);
       return;
@@ -837,7 +1019,7 @@
     spawnFish(W*.5, tankTop+100+Math.random()*Math.max(80,tankBottom-tankTop-200), type.key);
     state.selectedType = type.key;
     toast(`ซื้อ${type.name}แล้ว`);
-    beep(760,.07,"triangle",.03);
+    sfx("buy");
     updateUI(); renderShop(); renderSpeciesStrip(); saveProgress();
   }
 
@@ -890,8 +1072,7 @@
     );
 
     toast(`ขาย${type.name}แล้ว +${value.toLocaleString("th-TH")} เหรียญ`);
-    beep(660,.06,"triangle",.035);
-    setTimeout(()=>beep(880,.09,"triangle",.03),80);
+    sfx("sell");
     updateUI();
     renderShop();
     renderSpeciesStrip();
@@ -946,26 +1127,26 @@
     }
     if(state.coins<type.price){
       toast("เหรียญไม่พอ");
-      beep(150,.08,"square",.025);
+      sfx("error");
       return;
     }
     state.coins-=type.price;
     spawnGuardian(W*.5,tankTop+105,type.key);
     toast(`${type.name} เข้าประจำการแล้ว 🛡️`);
-    beep(760,.08,"triangle",.035);
+    sfx("buy");
     updateUI();renderShop();saveProgress();
   }
 
   function buy(kind){
     const prices={food:foodUpgradeCost(),snail:snailCost()};
     const price=prices[kind];
-    if(state.coins<price){toast("เหรียญไม่พอ");beep(150,.08,"square",.025);return}
+    if(state.coins<price){toast("เหรียญไม่พอ");sfx("error");return}
     if(kind==="snail"&&state.snail){toast("มีหอยผู้ช่วยแล้ว");return}
     if(kind==="food"&&state.foodLevel>=5){toast("อาหารระดับสูงสุดแล้ว");return}
     state.coins-=price;
     if(kind==="food"){state.foodLevel++;toast("อาหารดีขึ้น ปลาโตไวขึ้น")}
     if(kind==="snail"){state.snail={x:W*.2,y:tankBottom-12,vx:24,dir:1};toast("หอยจะเก็บเหรียญใกล้พื้น")}
-    beep(740,.08,"triangle",.03);updateUI();renderShop();saveProgress();
+    sfx("buy");updateUI();renderShop();saveProgress();
   }
 
   function healAllFish(){
@@ -987,7 +1168,7 @@
     const cost=healFishCost();
     if(state.coins<cost){
       toast(`เหรียญไม่พอ • ค่ารักษา ${cost.toLocaleString("th-TH")} เหรียญ`);
-      beep(180,.08,"square",.022);
+      sfx("error");
       return;
     }
 
@@ -1004,8 +1185,7 @@
 
     toast(`💚 รักษาปลา ${injured.length} ตัวแล้ว
 ฟื้นเลือดรวม ${Math.round(totalHealed)} • -${cost.toLocaleString("th-TH")} เหรียญ`);
-    beep(520,.07,"sine",.035);
-    setTimeout(()=>beep(660,.09,"triangle",.03),90);
+    sfx("heal");
     updateUI();
     saveProgress();
   }
@@ -1025,7 +1205,7 @@
       if(i===toSpawn-1){ updateUI(); renderSpeciesStrip(); saveProgress(); }
     }, i*260);
     toast(fee>0 ? `กู้ตู้ปลาแล้ว -${fee} เหรียญ` : "กู้ตู้ปลาอัตโนมัติ");
-    beep(610,.08,"triangle",.03);
+    sfx("rescue");
     updateUI(); saveProgress();
   }
 
@@ -1053,7 +1233,7 @@
     const idx=state.coinsDrop.indexOf(c); if(idx<0) return;
     const bonus = Math.round(c.value*(1+state.pearlLevel*.15));
     state.coins += bonus; state.coinsDrop.splice(idx,1); state.combo++;
-    beep(700+Math.min(500,state.combo*18),.045,"triangle",.023); updateUI();
+    sfx("coin",state.combo); updateUI();
   }
 
   function renderSpeciesStrip(){
@@ -1149,7 +1329,7 @@
           f.health=Math.min(foodMaxHealth,f.health+foodHeal);
           f.growth+=(6.7+state.foodLevel*2.2)*t.growthMul*eventFx.growthMul*permanentFx.growthMul;
           f.size=Math.min(1.85,f.baseSize+f.growth/140);
-          beep(300+f.size*120,.03,"sine",.01);
+          sfx("eat",f.size);
         }
       } else {
         f.vx+=(Math.random()-.5)*28*dt*t.speed*eventFx.speedMul*permanentFx.speedMul;
@@ -1235,7 +1415,7 @@
             life:.22,maxLife:.22,color:gt.color,power:Math.min(2.2,.75+gt.damage/8),typeKey:gt.key
           });
           g.attackTimer=Math.max(.34,gt.cooldown-state.pearlLevel*.012)+Math.random()*.12;
-          beep(460+gt.damage*18+Math.random()*70,.025,"triangle",.009);
+          sfx("shot",gt.damage);
         }
       }else{
         // แต่ละตัวมีช่องลาดตระเวนของตัวเอง กระจายทั่วตู้
@@ -2906,7 +3086,7 @@
     let c=nearest(state.coinsDrop,p.x,p.y,34);
     if(c){ collectCoin(c); saveProgress(); return; }
     const e=nearest(state.enemies,p.x,p.y,60);
-    if(e){ e.hp-=1+(state.pearlLevel>0?.35*state.pearlLevel:0); beep(150+Math.random()*60,.04,"square",.022); return; }
+    if(e){ e.hp-=1+(state.pearlLevel>0?.35*state.pearlLevel:0); sfx("hit"); return; }
     const fish=nearest(state.fish,p.x,p.y,42);
     if(fish){
       const status=getFishStatus(fish);
@@ -2927,17 +3107,17 @@
   $("shopBtn").onclick=()=>{ renderShop(); ui.shopOverlay.classList.remove("hidden"); };
   $("healBtn").onclick=()=>healAllFish();
   $("closeShopBtn").onclick=()=> ui.shopOverlay.classList.add("hidden");
-  $("saveBtn").onclick=()=>{ saveProgress(); toast("บันทึกความคืบหน้าแล้ว"); };
+  $("saveBtn").onclick=()=>{ saveProgress(); toast("บันทึกความคืบหน้าแล้ว"); sfx("save"); };
   $("rescueBtn").onclick=()=> rescueTank(false);
 
   $("startBtn").onclick=()=>{
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    ensureAudio();
     ui.startOverlay.classList.add("hidden");
     reset(true);
   };
   $("newBtn").onclick=()=>{
     localStorage.removeItem(SAVE_KEY);
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    ensureAudio();
     ui.startOverlay.classList.add("hidden");
     reset(false);
   };
