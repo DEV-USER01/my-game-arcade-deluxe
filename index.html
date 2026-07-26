@@ -274,7 +274,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Audio Settings: เอฟเฟกต์ดังขึ้น พร้อมปิด–เปิดเอฟเฟกต์และเพลงพื้นหลังแยกกัน</p>
+      <p>เวอร์ชัน SFX +50%: เพิ่มความดังเอฟเฟกต์ประมาณ 50% โดยไม่เพิ่มเพลงพื้นหลัง</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -675,7 +675,7 @@
       audioMusicGain=audioCtx.createGain();
       audioMaster=audioCtx.createGain();
 
-      audioSfxGain.gain.value=audioSettings.sfxEnabled?1:.0001;
+      audioSfxGain.gain.value=audioSettings.sfxEnabled?1.5:.0001;
       audioMusicGain.gain.value=.0001;
       audioMaster.gain.value=1.12;
 
@@ -853,7 +853,7 @@
     if(audioSfxGain){
       const now=audioCtx.currentTime;
       audioSfxGain.gain.cancelScheduledValues(now);
-      audioSfxGain.gain.linearRampToValueAtTime(audioSettings.sfxEnabled?1:.0001,now+.08);
+      audioSfxGain.gain.linearRampToValueAtTime(audioSettings.sfxEnabled?1.5:.0001,now+.08);
     }
 
     updateAudioSettingsUI();
