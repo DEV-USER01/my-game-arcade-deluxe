@@ -136,15 +136,6 @@
       to{filter:brightness(1.22);transform:translateX(-50%) scale(1.005)}
     }
     @keyframes bossWarningScan{to{transform:translateX(140%)}}
-    #speciesStrip{
-      position:absolute;left:8px;right:8px;bottom:82px;display:flex;gap:6px;overflow:auto;
-      padding-bottom:4px;pointer-events:auto
-    }
-    .chip{
-      flex:0 0 auto;border:1px solid var(--line);background:rgba(4,27,47,.82);border-radius:999px;
-      padding:6px 10px;font-size:12px;font-weight:800;white-space:nowrap
-    }
-    .chip.selected{outline:2px solid rgba(255,213,101,.8);background:rgba(20,55,80,.95)}
     .overlay{
       position:absolute;inset:0;display:grid;place-items:center;padding:20px;
       background:linear-gradient(rgba(0,16,29,.52),rgba(0,11,20,.82));backdrop-filter:blur(5px)
@@ -354,14 +345,7 @@
     <div class="bossWarningTrack"><div id="bossWarningBar"></div></div>
   </div>
 
-
-
-
-  
-
-  <div id="speciesStrip" aria-label="สายพันธุ์ปลา"></div>
-
-  <div id="bottomBar">
+<div id="bottomBar">
     <button id="feedHintBtn" class="actionBtn primary">🍤 ให้อาหาร<br><small>แตะในตู้</small></button>
     <button id="shopBtn" class="actionBtn">🛒 ร้านค้า</button>
     <button id="healBtn" class="actionBtn">💚 รักษา<br><small>ทั้งตู้</small></button>
@@ -373,7 +357,7 @@
     <div class="card center">
       <div style="font-size:58px">🐠✨</div>
       <h1>Aqua Pocket Deluxe</h1>
-      <p>เวอร์ชัน Compact Stats: ย่อกล่องข้อมูลด้านบน และแตะเพื่อดูรายละเอียดทั้งหมด</p>
+      <p>เวอร์ชัน Clean Aquarium: นำแถบเลือกชนิดปลาออก และขยายพื้นที่ตู้ปลา</p>
       <div class="tips">
         <div class="tip">👆 แตะพื้นที่ว่างเพื่อให้อาหาร</div>
         <div class="tip">🪙 แตะเหรียญเพื่อเก็บเงิน</div>
@@ -561,7 +545,7 @@
   const $ = id => document.getElementById(id);
   const ui = {
     coins:$("coins"), goal:$("goal"), wave:$("wave"), tankStats:$("tankStats"),
-    toast:$("toast"), speciesStrip:$("speciesStrip"), fishShop:$("fishShop"), upgradeShop:$("upgradeShop"),
+    toast:$("toast"), fishShop:$("fishShop"), upgradeShop:$("upgradeShop"),
     fishMarket:$("fishMarket"), marketSummary:$("marketSummary"),
     eventBanner:$("eventBanner"), eventIcon:$("eventIcon"), eventName:$("eventName"),
     eventDesc:$("eventDesc"), eventTime:$("eventTime"), eventBar:$("eventBar"),
@@ -618,7 +602,7 @@
 
   function fit(){
     const r=canvas.getBoundingClientRect();
-    W=r.width; H=r.height; tankBottom=H-150;
+    W=r.width; H=r.height; tankBottom=H-82;
 
     // เพิ่มความคมชัดจากเวอร์ชันก่อน แต่จำกัดจำนวนพิกเซลเพื่อไม่ให้มือถือกระตุก
     const deviceDpr=window.devicePixelRatio||1;
@@ -1924,15 +1908,7 @@
   }
 
   function renderSpeciesStrip(){
-    ui.speciesStrip.innerHTML="";
-    Object.values(FISH_TYPES).forEach(type=>{
-      const btn=document.createElement("button");
-      btn.className="chip"+(state.selectedType===type.key?" selected":"");
-      btn.type="button";
-      btn.textContent=`${type.emoji} ${type.name}`;
-      btn.onclick=()=>{ state.selectedType=type.key; renderSpeciesStrip(); };
-      ui.speciesStrip.appendChild(btn);
-    });
+    // นำแถบเลือกชนิดปลาออกแล้ว เลือกและซื้อปลาได้จากร้านค้า
   }
 
   function renderShop(){
