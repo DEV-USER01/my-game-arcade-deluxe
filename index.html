@@ -885,7 +885,67 @@
     gold:{key:"gold",name:"อีเวนต์ทอง",icon:"🪙",className:"gold",duration:45,desc:"ออกเหรียญ x2.6 • มูลค่าเหรียญ x3",fishBuff:"เกล็ดทอง",growthMul:1.2,healMul:1.35,hungerMul:.82,speedMul:1.08,coinRateMul:2.6,coinValueMul:3,damageTakenMul:.88,enemySpeedMul:1,enemyRewardMul:2.2,guardianDamageMul:1.1},
     blessing:{key:"blessing",name:"อีเวนต์พรแห่งทะเล",icon:"✨",className:"blessing",duration:50,desc:"หิวช้าลง 55% • ฟื้นเลือด x3 • เกราะ 50%",fishBuff:"พรแห่งทะเล",growthMul:1.55,healMul:3,hungerMul:.45,speedMul:1.2,coinRateMul:1.45,coinValueMul:1.45,damageTakenMul:.5,enemySpeedMul:.92,enemyRewardMul:1.35,guardianDamageMul:1.25}
   };
-  const NO_EVENT_EFFECTS={growthMul:1,healMul:1,hungerMul:1,speedMul:1,coinRateMul:1,coinValueMul:1,damageTakenMul:1,enemySpeedMul:1,enemyRewardMul:1,guardianDamageMul:1};
+  const NO_EVENT_EFFECTS={growthMul:1,healMul:1,hungerMul:1,coinRateMul:1,coinValueMul:1,damageTakenMul:1,enemySpeedMul:1,enemyRewardMul:1,guardianDamageMul:1};
+
+  const SPRITE_CACHE={};
+  function svgToDataUri(svg){
+    return "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg.replace(/>\s+</g,"><").trim());
+  }
+  function getSprite(key,svg){
+    if(SPRITE_CACHE[key]) return SPRITE_CACHE[key];
+    const img=new Image();
+    img.decoding="async";
+    img.src=svgToDataUri(svg);
+    SPRITE_CACHE[key]=img;
+    return img;
+  }
+  function getGoldfishSprite(){
+    return getSprite("goldfish-chibi",`
+      <svg xmlns="http://www.w3.org/2000/svg" width="220" height="180" viewBox="0 0 220 180">
+        <defs>
+          <linearGradient id="tail" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#fff1a8"/>
+            <stop offset="58%" stop-color="#ffd25f"/>
+            <stop offset="100%" stop-color="#f6a23b"/>
+          </linearGradient>
+          <radialGradient id="body" cx="35%" cy="30%" r="75%">
+            <stop offset="0%" stop-color="#fff6bd"/>
+            <stop offset="35%" stop-color="#ffd667"/>
+            <stop offset="72%" stop-color="#ffb53f"/>
+            <stop offset="100%" stop-color="#ec8f25"/>
+          </radialGradient>
+          <radialGradient id="fin" cx="40%" cy="25%" r="80%">
+            <stop offset="0%" stop-color="#fff5ae"/>
+            <stop offset="100%" stop-color="#f5bb43"/>
+          </radialGradient>
+        </defs>
+
+        <g transform="translate(10 8)">
+          <path d="M58 86 C25 68 10 45 15 24 C40 30 67 49 82 72 C77 80 69 86 58 86 Z" fill="url(#tail)" stroke="#c87b25" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M62 93 C24 98 10 122 17 145 C45 140 71 124 84 103 C78 97 71 94 62 93 Z" fill="url(#tail)" stroke="#c87b25" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M89 82 C76 55 92 25 137 18 C184 10 208 37 203 78 C198 122 161 144 112 139 C76 135 58 111 60 90 C62 81 77 78 89 82 Z" fill="url(#body)" stroke="#c87b25" stroke-width="7" stroke-linejoin="round"/>
+          <path d="M106 25 C118 6 142 2 160 16 C148 28 128 38 111 41 C105 36 103 31 106 25 Z" fill="url(#fin)" stroke="#c87b25" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M96 112 C111 116 118 131 111 146 C91 144 75 133 69 118 C76 113 86 110 96 112 Z" fill="url(#fin)" stroke="#c87b25" stroke-width="6" stroke-linejoin="round"/>
+          <path d="M92 92 C107 90 117 100 113 113 C96 116 82 109 79 97 C82 93 87 92 92 92 Z" fill="url(#fin)" stroke="#c87b25" stroke-width="5" stroke-linejoin="round"/>
+          <ellipse cx="126" cy="77" rx="42" ry="36" fill="#ffe88d" opacity=".52"/>
+          <ellipse cx="112" cy="59" rx="18" ry="9" fill="#fff8d7" opacity=".85" transform="rotate(-18 112 59)"/>
+          <circle cx="162" cy="74" r="19" fill="#fff" stroke="#d9ecff" stroke-width="3"/>
+          <circle cx="168" cy="76" r="9" fill="#23345b"/>
+          <circle cx="171" cy="72" r="3.5" fill="#fff"/>
+          <ellipse cx="150" cy="102" rx="8" ry="5" fill="#ff9d96" opacity=".72"/>
+          <path d="M180 97 Q192 104 181 111" fill="none" stroke="#6e4126" stroke-width="6" stroke-linecap="round"/>
+          <path d="M134 86 Q128 91 129 99" fill="none" stroke="#c88745" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="187" cy="62" r="3" fill="#ffcc7b" opacity=".75"/>
+        </g>
+      </svg>
+    `);
+  }
+  function tryDrawGoldfishSprite(){
+    const img=getGoldfishSprite();
+    if(!img || !img.complete || !img.naturalWidth) return false;
+    ctx.drawImage(img,-47,-39,98,78);
+    return true;
+  }
 
   const MAX_GUARDIANS_PER_TYPE = 3;
   const MAX_GUARDIANS = Object.keys(GUARDIAN_TYPES).length * MAX_GUARDIANS_PER_TYPE;
@@ -3328,168 +3388,148 @@
     ctx.shadowOffsetY=MOBILE_MODE?0:3;
 
     if(t.body==="gold"){
-      // โมเดลปลาทองการ์ตูนแบบกลมป้อม ตาโต และหางพริ้ว
-      ctx.save();
-      ctx.translate(-20,0);
-      ctx.rotate(tailSwing);
+      // ใช้สไปรต์ปลาทองสไตล์ชิบิให้หน้าตาใกล้ภาพตัวอย่างมากขึ้น
+      if(tryDrawGoldfishSprite()){
+        if(!MOBILE_MODE){
+          ctx.fillStyle="rgba(255,244,170,.78)";
+          [[-28,-16,1.25],[-22,15,1],[30,-15,.95]].forEach(([x,y,r])=>{
+            ctx.beginPath();
+            ctx.arc(x,y,r,0,Math.PI*2);
+            ctx.fill();
+          });
+        }
+      }else{
+        // fallback เดิมกรณีสไปรต์ยังโหลดไม่เสร็จ
+        ctx.save();
+        ctx.translate(-20,0);
+        ctx.rotate(tailSwing);
 
-      const tail=ctx.createLinearGradient(-39,-22,2,19);
-      tail.addColorStop(0,`hsla(${hue+34},100%,88%,.82)`);
-      tail.addColorStop(.42,`hsla(${hue+20},98%,72%,.92)`);
-      tail.addColorStop(1,`hsl(${hue+5},92%,55%)`);
-      ctx.fillStyle=tail;
-      ctx.strokeStyle=`hsl(${hue-7},72%,39%)`;
-      ctx.lineWidth=1.7;
-
-      // หางพัดสองแฉก
-      ctx.beginPath();
-      ctx.moveTo(2,0);
-      ctx.bezierCurveTo(-10,-8,-16,-28,-36,-27);
-      ctx.bezierCurveTo(-41,-18,-36,-8,-26,-1);
-      ctx.bezierCurveTo(-38,7,-42,19,-34,27);
-      ctx.bezierCurveTo(-15,27,-8,10,2,0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      // เส้นหางให้ดูมีมิติ
-      ctx.strokeStyle=`hsla(${hue-4},70%,42%,.38)`;
-      ctx.lineWidth=1;
-      [-18,-8,8,18].forEach(offset=>{
+        const tail=ctx.createLinearGradient(-39,-22,2,19);
+        tail.addColorStop(0,`hsla(${hue+34},100%,88%,.82)`);
+        tail.addColorStop(.42,`hsla(${hue+20},98%,72%,.92)`);
+        tail.addColorStop(1,`hsl(${hue+5},92%,55%)`);
+        ctx.fillStyle=tail;
+        ctx.strokeStyle=`hsl(${hue-7},72%,39%)`;
+        ctx.lineWidth=1.7;
         ctx.beginPath();
-        ctx.moveTo(-1,0);
-        ctx.quadraticCurveTo(-19,offset*.55,-33,offset);
+        ctx.moveTo(2,0);
+        ctx.bezierCurveTo(-10,-8,-16,-28,-36,-27);
+        ctx.bezierCurveTo(-41,-18,-36,-8,-26,-1);
+        ctx.bezierCurveTo(-38,7,-42,19,-34,27);
+        ctx.bezierCurveTo(-15,27,-8,10,2,0);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
-      });
-      ctx.restore();
+        ctx.restore();
 
-      // ครีบบนแบบพริ้ว
-      ctx.save();
-      ctx.rotate(finSwing*.7);
-      const topFin=ctx.createLinearGradient(-7,-25,13,-7);
-      topFin.addColorStop(0,`hsla(${hue+35},100%,91%,.88)`);
-      topFin.addColorStop(1,`hsla(${hue+9},96%,60%,.94)`);
-      ctx.fillStyle=topFin;
-      ctx.strokeStyle=`hsl(${hue-7},72%,39%)`;
-      ctx.lineWidth=1.4;
-      ctx.beginPath();
-      ctx.moveTo(-10,-13);
-      ctx.bezierCurveTo(-5,-28,6,-31,16,-19);
-      ctx.quadraticCurveTo(8,-11,1,-7);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+        ctx.save();
+        ctx.rotate(finSwing*.7);
+        const topFin=ctx.createLinearGradient(-7,-25,13,-7);
+        topFin.addColorStop(0,`hsla(${hue+35},100%,91%,.88)`);
+        topFin.addColorStop(1,`hsla(${hue+9},96%,60%,.94)`);
+        ctx.fillStyle=topFin;
+        ctx.strokeStyle=`hsl(${hue-7},72%,39%)`;
+        ctx.lineWidth=1.4;
+        ctx.beginPath();
+        ctx.moveTo(-10,-13);
+        ctx.bezierCurveTo(-5,-28,6,-31,16,-19);
+        ctx.quadraticCurveTo(8,-11,1,-7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
 
-      // ตัวกลมป้อม
-      const body=ctx.createRadialGradient(12,-11,2,3,1,36);
-      body.addColorStop(0,`hsl(${hue+31},100%,90%)`);
-      body.addColorStop(.25,`hsl(${hue+18},100%,73%)`);
-      body.addColorStop(.62,`hsl(${hue+5},96%,58%)`);
-      body.addColorStop(1,`hsl(${hue-8},82%,42%)`);
-      ctx.fillStyle=body;
-      ctx.strokeStyle=`hsl(${hue-12},70%,31%)`;
-      ctx.lineWidth=2.1;
-      ctx.beginPath();
-      ctx.ellipse(3,0,31,25,-.02,0,Math.PI*2);
-      ctx.fill();
-      ctx.stroke();
+        const body=ctx.createRadialGradient(12,-11,2,3,1,36);
+        body.addColorStop(0,`hsl(${hue+31},100%,90%)`);
+        body.addColorStop(.25,`hsl(${hue+18},100%,73%)`);
+        body.addColorStop(.62,`hsl(${hue+5},96%,58%)`);
+        body.addColorStop(1,`hsl(${hue-8},82%,42%)`);
+        ctx.fillStyle=body;
+        ctx.strokeStyle=`hsl(${hue-12},70%,31%)`;
+        ctx.lineWidth=2.1;
+        ctx.beginPath();
+        ctx.ellipse(3,0,31,25,-.02,0,Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
 
-      // แก้ม/หน้าสีครีม
-      const face=ctx.createRadialGradient(25,-7,2,23,0,19);
-      face.addColorStop(0,"rgba(255,252,226,.98)");
-      face.addColorStop(1,"rgba(255,224,154,.62)");
-      ctx.fillStyle=face;
-      ctx.beginPath();
-      ctx.ellipse(20,0,15,19,-.08,0,Math.PI*2);
-      ctx.fill();
+        const face=ctx.createRadialGradient(25,-7,2,23,0,19);
+        face.addColorStop(0,"rgba(255,252,226,.98)");
+        face.addColorStop(1,"rgba(255,224,154,.62)");
+        ctx.fillStyle=face;
+        ctx.beginPath();
+        ctx.ellipse(20,0,15,19,-.08,0,Math.PI*2);
+        ctx.fill();
 
-      // ครีบข้างใหญ่แบบตุ๊กตา
-      ctx.save();
-      ctx.translate(-3,8);
-      ctx.rotate(finSwing+.15);
-      const sideFin=ctx.createLinearGradient(-2,-2,16,14);
-      sideFin.addColorStop(0,`hsla(${hue+30},100%,88%,.92)`);
-      sideFin.addColorStop(1,`hsla(${hue+5},94%,57%,.92)`);
-      ctx.fillStyle=sideFin;
-      ctx.strokeStyle=`hsl(${hue-8},70%,38%)`;
-      ctx.lineWidth=1.3;
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.bezierCurveTo(7,0,15,8,12,15);
-      ctx.bezierCurveTo(4,15,-2,9,0,0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
+        ctx.save();
+        ctx.translate(-3,8);
+        ctx.rotate(finSwing+.15);
+        const sideFin=ctx.createLinearGradient(-2,-2,16,14);
+        sideFin.addColorStop(0,`hsla(${hue+30},100%,88%,.92)`);
+        sideFin.addColorStop(1,`hsla(${hue+5},94%,57%,.92)`);
+        ctx.fillStyle=sideFin;
+        ctx.strokeStyle=`hsl(${hue-8},70%,38%)`;
+        ctx.lineWidth=1.3;
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.bezierCurveTo(7,0,15,8,12,15);
+        ctx.bezierCurveTo(4,15,-2,9,0,0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
 
-      // ครีบล่างเล็ก
-      ctx.fillStyle=`hsla(${hue+16},96%,67%,.88)`;
-      ctx.strokeStyle=`hsl(${hue-8},70%,38%)`;
-      ctx.lineWidth=1.2;
-      ctx.beginPath();
-      ctx.moveTo(1,20);
-      ctx.quadraticCurveTo(8,30,16,20);
-      ctx.quadraticCurveTo(9,18,1,20);
-      ctx.fill();
-      ctx.stroke();
+        ctx.fillStyle=`hsla(${hue+16},96%,67%,.88)`;
+        ctx.strokeStyle=`hsl(${hue-8},70%,38%)`;
+        ctx.lineWidth=1.2;
+        ctx.beginPath();
+        ctx.moveTo(1,20);
+        ctx.quadraticCurveTo(8,30,16,20);
+        ctx.quadraticCurveTo(9,18,1,20);
+        ctx.fill();
+        ctx.stroke();
 
-      // ลายเกล็ดและไฮไลต์แบบวาว
-      drawScaleSparkles([
-        [-13,-7,3.5],[-5,-12,3.2],[4,-13,2.8],
-        [-11,2,3],[-2,5,3],[7,2,2.5]
-      ],"rgba(255,248,212,.38)");
+        drawScaleSparkles([
+          [-13,-7,3.5],[-5,-12,3.2],[4,-13,2.8],
+          [-11,2,3],[-2,5,3],[7,2,2.5]
+        ],"rgba(255,248,212,.38)");
 
-      ctx.fillStyle="rgba(255,255,255,.56)";
-      ctx.beginPath();
-      ctx.ellipse(-3,-16,10,4,-.18,0,Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle="rgba(255,255,255,.36)";
-      ctx.beginPath();
-      ctx.arc(-15,-9,3,0,Math.PI*2);
-      ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,.56)";
+        ctx.beginPath();
+        ctx.ellipse(-3,-16,10,4,-.18,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle="rgba(255,255,255,.36)";
+        ctx.beginPath();
+        ctx.arc(-15,-9,3,0,Math.PI*2);
+        ctx.fill();
 
-      // ตาโตแบบคาแรกเตอร์
-      drawFishEye(18,-6,7.4,.42);
-      ctx.strokeStyle="rgba(65,30,18,.66)";
-      ctx.lineWidth=1.25;
-      ctx.lineCap="round";
-      ctx.beginPath();
-      ctx.moveTo(13,-13);
-      ctx.quadraticCurveTo(18,-16,23,-13);
-      ctx.stroke();
+        drawFishEye(18,-6,7.4,.42);
+        ctx.strokeStyle="rgba(65,30,18,.66)";
+        ctx.lineWidth=1.25;
+        ctx.lineCap="round";
+        ctx.beginPath();
+        ctx.moveTo(13,-13);
+        ctx.quadraticCurveTo(18,-16,23,-13);
+        ctx.stroke();
 
-      // แก้มชมพู
-      ctx.fillStyle="rgba(255,112,116,.52)";
-      ctx.beginPath();
-      ctx.ellipse(19,5,4.4,2.7,-.12,0,Math.PI*2);
-      ctx.fill();
+        ctx.fillStyle="rgba(255,112,116,.52)";
+        ctx.beginPath();
+        ctx.ellipse(19,5,4.4,2.7,-.12,0,Math.PI*2);
+        ctx.fill();
 
-      // ปากยิ้มเปิดเล็ก ๆ
-      ctx.fillStyle="rgba(92,34,29,.90)";
-      ctx.beginPath();
-      ctx.ellipse(28,4,4.3,3.2,.10,0,Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle="#ff8f82";
-      ctx.beginPath();
-      ctx.ellipse(29,5.2,2.2,1.2,.06,0,Math.PI*2);
-      ctx.fill();
+        ctx.fillStyle="rgba(92,34,29,.90)";
+        ctx.beginPath();
+        ctx.ellipse(28,4,4.3,3.2,.10,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle="#ff8f82";
+        ctx.beginPath();
+        ctx.ellipse(29,5.2,2.2,1.2,.06,0,Math.PI*2);
+        ctx.fill();
 
-      // เหงือก
-      ctx.strokeStyle="rgba(112,54,20,.34)";
-      ctx.lineWidth=1.1;
-      ctx.beginPath();
-      ctx.arc(10,1,8,-1.05,1.08);
-      ctx.stroke();
-
-      // ประกายเล็ก ๆ รอบปลาทอง
-      if(!MOBILE_MODE){
-        ctx.fillStyle="rgba(255,244,170,.82)";
-        [[-25,-18,1.2],[-21,17,1],[28,-16,.9]].forEach(([x,y,r])=>{
-          ctx.beginPath();
-          ctx.arc(x,y,r,0,Math.PI*2);
-          ctx.fill();
-        });
+        ctx.strokeStyle="rgba(112,54,20,.34)";
+        ctx.lineWidth=1.1;
+        ctx.beginPath();
+        ctx.arc(10,1,8,-1.05,1.08);
+        ctx.stroke();
       }
 
     }else if(t.body==="clown"){
