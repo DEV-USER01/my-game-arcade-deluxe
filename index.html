@@ -2180,7 +2180,7 @@
         }
       });
       savedGuardianTypes.forEach((typeKey,i)=>{
-        spawnGuardian(W*.32+(i%3)*74,tankTop+88+Math.floor(i/3)*62,typeKey);
+        spawnGuardian(W*.32+(i%3)*74, Math.min(tankBottom-120, tankTop+150+Math.floor(i/3)*68), typeKey);
       });
       toast("โหลดตู้ปลาเดิมแล้ว");
       return true;
@@ -2433,7 +2433,7 @@
       return;
     }
     state.coins-=type.price;
-    spawnGuardian(W*.5,tankTop+105,type.key);
+    spawnGuardian(W*.5,Math.min(tankBottom-120, tankTop + Math.max(150,(tankBottom-tankTop)*0.55)),type.key);
     toast(`${type.name} เข้าประจำการแล้ว 🛡️`);
     sfx("buy");
     updateUI();renderShop();saveProgress();
@@ -2806,11 +2806,11 @@
         const col=gi%columns;
         const row=Math.floor(gi/columns);
         const baseX=(col+1)*W/(columns+1);
-        const usableHeight=Math.max(100,tankBottom-tankTop-150);
-        const baseY=tankTop+80+(row+1)*usableHeight/(rows+1);
+        const usableHeight=Math.max(120,tankBottom-tankTop-260);
+        const baseY=tankTop+170+(row+1)*usableHeight/(rows+1);
         const phase=gi*1.73;
-        const anchorX=baseX+Math.sin(state.elapsed*.35+phase)*Math.min(46,W/(columns+1)*.24);
-        const anchorY=baseY+Math.cos(state.elapsed*.48+phase)*34;
+        const anchorX=baseX+Math.sin(state.elapsed*.35+phase)*Math.min(40,W/(columns+1)*.22);
+        const anchorY=baseY+Math.cos(state.elapsed*.48+phase)*18;
         const dx=anchorX-g.x,dy=anchorY-g.y,d=Math.hypot(dx,dy)||1;
         g.vx+=(dx/d)*38*gt.speed*dt;
         g.vy+=(dy/d)*34*gt.speed*dt;
@@ -2824,7 +2824,7 @@
       if(Math.abs(g.vx)>2)g.dir=Math.sign(g.vx);
       if(g.x<34){g.x=34;g.vx=Math.abs(g.vx)}
       if(g.x>W-34){g.x=W-34;g.vx=-Math.abs(g.vx)}
-      if(g.y<tankTop+45){g.y=tankTop+45;g.vy=Math.abs(g.vy)}
+      if(g.y<tankTop+125){g.y=tankTop+125;g.vy=Math.abs(g.vy)}
       if(g.y>tankBottom-45){g.y=tankBottom-45;g.vy=-Math.abs(g.vy)}
     }
 
